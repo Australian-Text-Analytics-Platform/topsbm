@@ -1,6 +1,6 @@
 <a href="https://atap.edu.au"><img src="https://www.atap.edu.au/atap-logo.png" width="125" height="50" align="right"></a>
 
-# ATAP: Topsbm
+# ATAP: TopSBM
 
 TopSBM is a topic modelling approach that infers a hierarchy of topic clusters and word clusters in your Corpus
 in a non-parametric manner by leveraging stochastic block models.
