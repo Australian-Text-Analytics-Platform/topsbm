@@ -24,7 +24,7 @@ echo "PYTHON=$(which python)"
 echo "SITEPACKAGES=$SITEPACKAGES_DIR"
 echo "INSTALL_TO=$PKG_PATH"
 
-printf "Confirm? (y/n): " && read x && [[ $x == 'y' ]] || exit 1
+printf "Confirm? (y/n): " && read x && [[ $x == 'y' ]] || exit 0
 
 echo "Cloning to $PKG_PATH..."
 git clone --quiet https://github.com/martingerlach/hSBM_Topicmodel.git $PKG_PATH
