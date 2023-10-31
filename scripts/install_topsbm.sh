@@ -20,7 +20,7 @@ EOF
 PKG_PATH="${SITEPACKAGES_DIR}/$1"
 echo "PYTHON=$(which python)"
 echo "SITEPACKAGES=$SITEPACKAGES_DIR"
-echo "PACKAGE_PATH=$PKG_PATH"
+echo "INSTALL_TO=$PKG_PATH"
 
 printf "Confirm? (y/n): " && read x && [[ $x == 'y' ]] || exit 1
 
