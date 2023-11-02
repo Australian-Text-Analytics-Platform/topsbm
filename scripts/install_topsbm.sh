@@ -26,6 +26,7 @@ echo "INSTALL_TO=$PKG_PATH"
 
 printf "Confirm? (y/n): " && read x && [[ $x == 'y' ]] || exit 0
 
+# todo: download repo zip instead of git cloning the repository.
 echo "Cloning to $PKG_PATH..."
 git clone --quiet https://github.com/martingerlach/hSBM_Topicmodel.git $PKG_PATH
 echo "Done. Cloned to $PKG_PATH"
