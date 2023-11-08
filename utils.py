@@ -9,7 +9,8 @@ def embed_js(js_path: str, d3_json: str) -> HTML:
 
     This loads a HTML template and embed your JS code within it.
     Embedding JS is lightweight and flexible and does not require
-    CORs to be enabled in the server.
+    CORs to be enabled in the server. Also allows ES6 module syntax
+    to be used.
 
     A unique container is added to the HTML distinguished by uuid.
     Otherwise, getElementById on 'container' only will jumbo up the output cells.
@@ -20,6 +21,7 @@ def embed_js(js_path: str, d3_json: str) -> HTML:
     Access d3-json-path from the child node of container with id=_py_data.
         Retrieve the D3 input data json path from here.
         i.e. fetch(`/files/${d3-json-path}`)
+    Note: you won't be able to import other JS modules within your JS script.
     """
     with open('./viz/template.html', 'r', encoding='utf-8') as h:
         template = h.read()
