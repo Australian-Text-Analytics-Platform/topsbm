@@ -74,24 +74,34 @@ function build_radial_cluster(data) {
 
 // -- python output data pass in --
 try {
-    const py_data = document.getElementById("_py_data")
-    const fname = py_data?.attributes.getNamedItem("radial-cluster")?.value
+    let container = document.getElementById(`container-${uuid}`)
+
+    let py_data = null;
+    for (let i = 0; i < container.children.length; i++) {
+        let child = container.children[i]
+        if (child.id === "_py_data") {
+            py_data = child;
+            break
+        }
+    }
+    if (py_data === null) {
+        throw new ReferenceError("Missing _py_data from within container.")
+    }
+
+    const fname = py_data?.attributes.getNamedItem("d3-json-path")?.value
     if (fname === undefined) {
-        throw new ReferenceError("Missing 'radial-cluster' attribute.")
+        throw new ReferenceError("Missing 'd3-json-path' attribute in _py_data.")
     }
     // -- load file --
     let svg = await fetch(`/files/${fname}`)
         .then((res) => {
             if (res.status === 200) {
-                res.json()
-            } else {
-                throw new ReferenceError(`${fname} not found.`)
-                // Promise.reject(new ReferenceError(`${fname} not found.`)).then(r => throw )
+                return res.json()
             }
+            throw new ReferenceError(`${fname} not found.`)
         })
         .then((j) => build_radial_cluster(j))
 
-    let container = document.getElementById("container")
     container.append(svg.node())
 } catch (err) {
     console.error(err)
