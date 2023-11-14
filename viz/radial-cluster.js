@@ -1,7 +1,7 @@
 import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
 
 // Specify the chart’s dimensions.
-const width = 928;
+const width = 500;
 const height = width;
 const cx = width * 0.5; // adjust as needed to fit
 const cy = height * 0.54; // adjust as needed to fit
@@ -67,8 +67,14 @@ function build_radial_cluster(data) {
         .attr("paint-order", "stroke")
         .attr("stroke", "white")
         .attr("fill", "currentColor")
-        .text(d => d.data.name);
-
+        .text(d => {
+            if (d.data.name !== undefined) {
+                return d.data.name
+            } else {
+                return d.data.id
+            }
+        })
+        .attr("font-size", "4.5px")
     return svg;
 }
 
