@@ -2,7 +2,8 @@ import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
 
 
 // Specify the charts’ dimensions. The height is variable, depending on the layout.
-const width = 928;
+const width = 1600;
+const height = 1000;
 const marginTop = 10;
 const marginRight = 10;
 const marginBottom = 10;
@@ -23,7 +24,7 @@ function build_collapsible_tree(data) {
     // Create the SVG container, a layer for the links and a layer for the nodes.
     const svg = d3.create("svg")
         .attr("width", width)
-        .attr("height", dx)
+        .attr("height", height)
         .attr("viewBox", [-marginLeft, -marginTop, width, dx])
         .attr("style", "max-width: 100%; height: auto; font: 10px sans-serif; user-select: none;");
 
@@ -42,7 +43,7 @@ function build_collapsible_tree(data) {
         const nodes = root.descendants().reverse();
         const links = root.links();
 
-// Compute the new tree layout.
+        // Compute the new tree layout.
         tree(root);
 
         let left = root;
@@ -60,11 +61,11 @@ function build_collapsible_tree(data) {
             .attr("viewBox", [-marginLeft, left.x - marginTop, width, height])
             .tween("resize", window.ResizeObserver ? null : () => () => svg.dispatch("toggle"));
 
-// Update the nodes…
+        // Update the nodes…
         const node = gNode.selectAll("g")
             .data(nodes, d => d.id);
 
-// Enter any new nodes at the parent's previous position.
+        // Enter any new nodes at the parent's previous position.
         const nodeEnter = node.enter().append("g")
             .attr("transform", d => `translate(${source.y0},${source.x0})`)
             .attr("fill-opacity", 0)
@@ -83,47 +84,53 @@ function build_collapsible_tree(data) {
             .attr("dy", "0.31em")
             .attr("x", d => d._children ? -6 : 6)
             .attr("text-anchor", d => d._children ? "end" : "start")
-            .text(d => d.data.name)
+            .text(d => {
+                if (d.data.name !== undefined) {
+                    return d.data.name
+                } else {
+                    return d.data.id
+                }
+            })
             .clone(true).lower()
             .attr("stroke-linejoin", "round")
             .attr("stroke-width", 3)
             .attr("stroke", "white");
 
-// Transition nodes to their new position.
+        // Transition nodes to their new position.
         const nodeUpdate = node.merge(nodeEnter).transition(transition)
             .attr("transform", d => `translate(${d.y},${d.x})`)
             .attr("fill-opacity", 1)
             .attr("stroke-opacity", 1);
 
-// Transition exiting nodes to the parent's new position.
+        // Transition exiting nodes to the parent's new position.
         const nodeExit = node.exit().transition(transition).remove()
             .attr("transform", d => `translate(${source.y},${source.x})`)
             .attr("fill-opacity", 0)
             .attr("stroke-opacity", 0);
 
-// Update the links…
+        // Update the links…
         const link = gLink.selectAll("path")
             .data(links, d => d.target.id);
 
-// Enter any new links at the parent's previous position.
+        // Enter any new links at the parent's previous position.
         const linkEnter = link.enter().append("path")
             .attr("d", d => {
                 const o = {x: source.x0, y: source.y0};
                 return diagonal({source: o, target: o});
             });
 
-// Transition links to their new position.
+        // Transition links to their new position.
         link.merge(linkEnter).transition(transition)
             .attr("d", diagonal);
 
-// Transition exiting nodes to the parent's new position.
+        // Transition exiting nodes to the parent's new position.
         link.exit().transition(transition).remove()
             .attr("d", d => {
                 const o = {x: source.x, y: source.y};
                 return diagonal({source: o, target: o});
             });
 
-// Stash the old positions for transition.
+        // Stash the old positions for transition.
         root.eachBefore(d => {
             d.x0 = d.x;
             d.y0 = d.y;
@@ -137,7 +144,9 @@ function build_collapsible_tree(data) {
     root.descendants().forEach((d, i) => {
         d.id = i;
         d._children = d.children;
-        if (d.depth && d.data.name.length !== 7) d.children = null;
+
+        // note: below line came from D3 template and arbitrarily sets some nodes to not be expanded.
+        // if (d.depth && d.data.name.length > 7) d.children = null;
     });
 
     update(null, root);
