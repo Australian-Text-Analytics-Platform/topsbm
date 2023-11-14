@@ -12,7 +12,7 @@ from topsbm.sbmtm import sbmtm
 
 
 def group_membership_digraphs_of(model: sbmtm) -> tuple[nx.DiGraph]:
-    """ Produce a DiGraph based on the group membership output from topSBM.
+    """ Produce a networkx DiGraph based on the group membership output from topSBM.
     :arg model - a fitted topsbm.sbmtm model.
 
     :return Doc Digraph, Word DiGraph.
