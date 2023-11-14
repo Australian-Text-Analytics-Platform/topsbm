@@ -43,19 +43,14 @@ def group_membership_digraphs_of(model: sbmtm) -> tuple[nx.DiGraph]:
                         if layer == 0:
                             G.add_edge(cluster, leaf, weight=weight)
                         else:
-                            if layer == 1:
-                                edges = [(src, tgt) for src, tgt in G.edges() if
-                                         tgt == leaf and src.startswith(f"L{layer - 1}")]
-                            else:
-                                edges = [(src, tgt) for src, tgt in G.edges() if tgt == leaf]
-                                for l_tmp in range(layer - 1):
-                                    prior_clusters = [src for src, _ in edges if src.startswith(f"L{l_tmp}_")]
-                                    edges = [(src, tgt) for src, tgt in G.edges() if tgt in prior_clusters]
-                            if len(edges) <= 0:
-                                break
-                            else:
-                                prior_clusters = [prior for prior, _ in edges]
-                                for prior_cluster in prior_clusters:
-                                    G.add_edge(cluster, prior_cluster, weight=weight)
+                            # 1. searches bottom up for all prior clusters of (layer - 1) connected to this leaf node.
+                            # 2. add an edge from this cluster to all found prior clusters of (layer - 1)
+                            edges = [(src, tgt) for src, tgt in G.edges() if tgt == leaf]
+                            for l_tmp in range(1, layer):
+                                prior_clusters = [src for src, _ in edges if src.startswith(f"L{l_tmp - 1}_")]
+                                edges = [(src, tgt) for src, tgt in G.edges() if tgt in prior_clusters]
+                            prior_clusters = [prior for prior, _ in edges]
+                            for prior_cluster in prior_clusters:
+                                G.add_edge(cluster, prior_cluster, weight=weight)
         Gs.append(G)
     return tuple(Gs)
