@@ -10,8 +10,30 @@ It provides the following:
 import networkx as nx
 import numpy as np
 
+from atap_corpus import Corpus
 from atap_corpus.parts.dtm import DTM
 from topsbm.sbmtm import sbmtm
+
+__all__ = ['atap']
+
+
+class ATAPWrapper(object):
+    def __init__(self, model: sbmtm, corpus: Corpus):
+        self.model = model
+        self.corpus = corpus
+
+    # todo: visualisation functions.
+
+
+def atap(model: sbmtm, corpus: Corpus) -> ATAPWrapper:
+    if not isinstance(model, sbmtm):
+        raise ValueError(f"Expecting sbmtm for model but got {model}.")
+    if not isinstance(corpus, Corpus):
+        raise ValueError(f"Expecting Corpus for corpus but got {corpus}.")
+
+    # todo: ensure model is fitted else raise err
+    # todo: run all the processing.
+    return ATAPWrapper(model, corpus)
 
 
 def group_membership_digraphs_of(model: sbmtm) -> tuple[nx.DiGraph]:
