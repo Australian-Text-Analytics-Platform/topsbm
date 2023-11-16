@@ -28,17 +28,23 @@ class ATAPWrapper(object):
         self.model = model
         self.corpus = corpus
 
-    # todo: visualisation functions.
 
-
-def atap(model: sbmtm, corpus: Corpus) -> ATAPWrapper:
+def atap(model: sbmtm, corpus: Corpus, used_dtm: str) -> ATAPWrapper:
     if not isinstance(model, sbmtm):
         raise ValueError(f"Expecting sbmtm for model but got {model}.")
     if not isinstance(corpus, Corpus):
         raise ValueError(f"Expecting Corpus for corpus but got {corpus}.")
+    if model.g is None:
+        raise ValueError(f"Your model hasn't been fitted yet. Call .fit() on the model.")
 
-    # todo: ensure model is fitted else raise err
-    # todo: run all the processing.
+    # note: let's just do this for level 0 for now.
+    level = 0
+    topic_dtms = topic_dtms_of(model, level, corpus.get_dtm(used_dtm))
+    for cluster_idx, topic_dtm in topic_dtms.items():
+        corpus.add_dtm(topic_dtm, f'{used_dtm}_topsbm_cluster{cluster_idx}_lv{level}')
+    topic_dists: dict[int, np.ndarray[float]] = topic_dist_of(model, level)
+    for topic_idx, topic_dist in topic_dists.items():
+        corpus.add_meta(topic_dist, name=f"topsbm_topic{topic_idx}_lv{level}")
     return ATAPWrapper(model, corpus)
 
 
@@ -127,18 +133,28 @@ def group_membership_digraphs_of(model: sbmtm) -> tuple[nx.DiGraph, nx.DiGraph]:
     return tuple(Gs)
 
 
-def topic_dtms_of(model: sbmtm, level: int) -> DTM:
+def topic_dtms_of(model: sbmtm, level: int, from_dtm: DTM) -> dict[int, DTM]:
     """ Produce DTMs of topics (word clusters) from the model.
     Used to add directly to Corpus via .add_dtm()
     """
     word_groups: np.ndarray = model.group_membership(l=level)[1]
-    return DTM.from_matrix(word_groups, terms=model.words)
+    assert from_dtm.num_terms == word_groups.shape[1], \
+        "Mismatched number of terms. Did you use this dtm to fit the model?"
+
+    dtms = dict()
+    for wgroup_idx in range(word_groups.shape[0]):
+        dtms[wgroup_idx] = DTM.from_matrix(from_dtm.matrix.multiply(word_groups[wgroup_idx, :]), terms=from_dtm.terms)
+    return dtms
 
 
-def topic_dist_of(model: sbmtm, level: int) -> list[np.ndarray[float]]:
+def topic_dist_of(model: sbmtm, level: int) -> dict[int, np.ndarray[float]]:
     """ Produce a list of topic distributions
     Used to add directly to Corpus via .add_meta()
     """
     p_tw_d = model.get_groups(l=level)['p_tw_d']  # topic X doc
     num_topics = p_tw_d.shape[0]
-    return list([p_tw_d[idx, :] for idx in range(num_topics)])
+
+    topic_dists = dict()
+    for topic_idx in range(num_topics):
+        topic_dists[topic_idx] = p_tw_d[topic_idx, :]
+    return topic_dists
