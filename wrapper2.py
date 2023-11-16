@@ -6,13 +6,19 @@ It provides the following:
     1. Enhanced visualisations.
     2. Integrate results into an ATAP Corpus.
 """
+from IPython.display import HTML
+from pathlib import Path
 
 import networkx as nx
 import numpy as np
+import tempfile
 
 from atap_corpus import Corpus
 from atap_corpus.parts.dtm import DTM
 from topsbm.sbmtm import sbmtm
+
+from utils import embed_js
+import srsly
 
 __all__ = ['atap']
 
@@ -36,7 +42,44 @@ def atap(model: sbmtm, corpus: Corpus) -> ATAPWrapper:
     return ATAPWrapper(model, corpus)
 
 
-def group_membership_digraphs_of(model: sbmtm) -> tuple[nx.DiGraph]:
+# -- Visualisers --
+JUPYTER_ALLOW_HIDDEN = False
+try:
+    from notebook.services.contents.filemanager import FileContentsManager
+
+    JUPYTER_ALLOW_HIDDEN = FileContentsManager().allow_hidden
+except Exception as _:
+    pass
+
+_hierarchy_viz = {
+    "radial-cluster": "./viz/radial-cluster.js",
+    "collapsible-tree": "./viz/collapsible-tree.js"
+}
+
+
+def visualise_hierarchy(model: sbmtm, kind: str) -> tuple[HTML, HTML]:
+    if kind not in _hierarchy_viz.keys():
+        raise ValueError(f"Must be either {', '.join(_hierarchy_viz.keys())}.")
+    viz_js = _hierarchy_viz.get(kind)
+    if not Path(viz_js).exists(): raise FileNotFoundError(f"Missing viz js file. {viz_js}")
+    digraph_docs, digraph_word = group_membership_digraphs_of(model)
+
+    digraph: nx.DiGraph
+    tmp_data_files = []
+    tmpd = tempfile.mkdtemp(dir="./." if JUPYTER_ALLOW_HIDDEN else "./")
+    for digraph in [digraph_docs, digraph_word]:
+        roots = [node for node, in_degree in digraph.in_degree() if in_degree == 0]
+        assert len(roots) == 1, "Expecting only 1 root"
+        root = roots[0]
+        tmp = tempfile.mktemp(dir=tmpd, suffix='.json')
+        srsly.write_json(tmp, nx.tree_data(digraph, root=root))
+        tmp_data_files.append(tmp)
+    return embed_js(viz_js, tmp_data_files[0]), embed_js(viz_js, tmp_data_files[1])
+
+    # --- Data Adapters (from TopSBM to ATAP Corpus) ---
+
+
+def group_membership_digraphs_of(model: sbmtm) -> tuple[nx.DiGraph, nx.DiGraph]:
     """ Produce a networkx DiGraph based on the group membership output from topSBM.
     :arg model - a fitted topsbm.sbmtm model.
 
