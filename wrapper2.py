@@ -6,12 +6,18 @@ It provides the following:
     1. Enhanced visualisations.
     2. Integrate results into an ATAP Corpus.
 """
+import sys
+
+import subprocess
+
 from IPython.display import HTML
 from pathlib import Path
 
 import networkx as nx
 import numpy as np
 import tempfile
+from typing import IO
+from os import PathLike
 
 from atap_corpus import Corpus
 from atap_corpus.parts.dtm import DTM
@@ -24,9 +30,30 @@ __all__ = ['atap']
 
 
 class ATAPWrapper(object):
-    def __init__(self, model: sbmtm, corpus: Corpus):
+    def __init__(self, model: sbmtm, corpus: Corpus, attribs: dict):
         self.model = model
         self.corpus = corpus
+        self.attribs = attribs
+
+    def serialise(self, file: PathLike[str] | IO):
+        """ Serialise with added topsbm attributes."""
+        attribs = dict()
+        try:
+            git_args = {
+                'origin': ['config', '--get', 'remote.origin.url'],
+                'commit': ['rev-parse', 'HEAD'],
+            }
+            git = dict()
+            for name, args in git_args.items():
+                git[name] = subprocess.check_output(['git'] + args).strip().decode('utf-8')
+
+            git['origin'] = git['origin'].replace("git@github.com:", "https://")
+            attribs['git'] = git
+        except subprocess.CalledProcessError:
+            print("Failed to retrieve git information to be part of the Corpus attributes. Skipped.", file=sys.stderr)
+        attribs['data'] = self.attribs
+        self.corpus.attribute('topsbm', attribs)
+        return self.corpus.serialise(file)
 
 
 def atap(model: sbmtm, corpus: Corpus, used_dtm: str) -> ATAPWrapper:
@@ -37,15 +64,20 @@ def atap(model: sbmtm, corpus: Corpus, used_dtm: str) -> ATAPWrapper:
     if model.g is None:
         raise ValueError(f"Your model hasn't been fitted yet. Call .fit() on the model.")
 
-    # note: let's just do this for level 0 for now.
+    # note: let's just only do this for level 0 for now.
     level = 0
     topic_dtms = topic_dtms_of(model, level, corpus.get_dtm(used_dtm))
+    attributes = dict(word_clusters=dict(dtms=dict()), topic_dists=dict(metas=dict()))
     for cluster_idx, topic_dtm in topic_dtms.items():
-        corpus.add_dtm(topic_dtm, f'{used_dtm}_topsbm_cluster{cluster_idx}_lv{level}')
+        name = f"{used_dtm}_topsbm_lv{level}_cluster{cluster_idx}"
+        attributes["word_clusters"]['dtms'][cluster_idx] = name
+        corpus.add_dtm(topic_dtm, name)
     topic_dists: dict[int, np.ndarray[float]] = topic_dist_of(model, level)
     for topic_idx, topic_dist in topic_dists.items():
-        corpus.add_meta(topic_dist, name=f"topsbm_topic{topic_idx}_lv{level}")
-    return ATAPWrapper(model, corpus)
+        name = f"topsbm_lv{level}_topic{topic_idx}"
+        attributes["topic_dists"]['metas'][topic_idx] = name
+        corpus.add_meta(topic_dist, name=name)
+    return ATAPWrapper(model, corpus, attributes)
 
 
 # -- Visualisers --
