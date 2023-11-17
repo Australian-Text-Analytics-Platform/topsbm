@@ -95,7 +95,7 @@ _hierarchy_viz = {
 }
 
 
-def visualise_hierarchy(model: sbmtm, kind: str) -> tuple[HTML, HTML]:
+def visualise_blocks(model: sbmtm, kind: str) -> tuple[HTML, HTML]:
     if kind not in _hierarchy_viz.keys():
         raise ValueError(f"Must be either {', '.join(_hierarchy_viz.keys())}.")
     viz_js = _hierarchy_viz.get(kind)
