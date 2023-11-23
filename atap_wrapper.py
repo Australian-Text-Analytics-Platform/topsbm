@@ -21,6 +21,7 @@ from os import PathLike
 
 from atap_corpus import Corpus
 from atap_corpus.parts.dtm import DTM
+from atap_corpus.utils import download
 from topsbm.sbmtm import sbmtm
 
 from utils import embed_js
@@ -54,6 +55,9 @@ class ATAPWrapper(object):
         attribs['data'] = self.attribs
         self.corpus.attribute('topsbm', attribs)
         return self.corpus.serialise(file)
+
+    def download(self):
+        return download(self.corpus)
 
 
 def wrap(model: sbmtm, corpus: Corpus, used_dtm: str) -> ATAPWrapper:
