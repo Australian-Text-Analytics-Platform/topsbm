@@ -17,7 +17,7 @@ This is demo jupyter notebook for TopSBM with ATAP Corpus integration. At the en
 download
 a Corpus with TopSBM results. You may then choose to upload this Corpus across to other ATAP tools for further analysis.
 
-[![Binder](https://binderhub.atap-binder.cloud.edu.au/badge_logo.svg)](https://binderhub.atap-binder.cloud.edu.au/v2/gh/Australian-Text-Analytics-Platform/topsbm.git/772ae8f525442d552becec0a69a5e6bae79fb081?labpath=demo.ipynb)
+[![Binder](https://binderhub.atap-binder.cloud.edu.au/badge_logo.svg)](https://binderhub.atap-binder.cloud.edu.au/v2/gh/Australian-Text-Analytics-Platform/topsbm.git/94b38ee32135f55c35015f6efb3c873240357b2c?labpath=demo.ipynb)
 
 # Citations
 
