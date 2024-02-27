@@ -99,7 +99,12 @@ try {
         throw new ReferenceError("Missing 'd3-json-path' attribute in _py_data.")
     }
     // -- load file --
-    let svg = await fetch(`/files/${fname}`)
+    // note: Binder and Local's /files url path starting point are different.
+    //  for binder, start replacing as /files where /doc starts.
+    //  for local, start replacing as /files right after the origin. (i.e. replace the entire url path)
+    let lastIdx = Math.max(window.location.pathname.indexOf("/doc"), 0)
+    let prefix = window.location.pathname.slice(0, lastIdx)
+    let svg = await fetch(`${prefix}/files/${fname}`)
         .then((res) => {
             if (res.status === 200) {
                 return res.json()
