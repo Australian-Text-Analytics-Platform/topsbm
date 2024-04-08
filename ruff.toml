@@ -1,0 +1,24 @@
+include = [
+    "**/*.py",
+    "**/pyproject.toml",
+]
+exclude = [
+    "**/.venv",
+    "**/.ruff_cache",
+    "**/site-packages",
+    "**/.git",
+]
+line-length = 88    # same as black
+indent-width = 4 # same as black
+
+[lint]
+ignore = [
+    "F841", # allow unused variable
+    "F401", # allow unused imports
+    "F403", # allow asterisk imports
+]
+
+[format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
