@@ -1,4 +1,4 @@
-""" wrapper2.py
+"""wrapper2.py
 
 This is a wrapper over TopSBM and is meant to extend the existing workflow with
 ATAP integration.
@@ -6,6 +6,7 @@ It provides the following:
     1. Enhanced visualisations.
     2. Integrate results into an ATAP Corpus.
 """
+
 import sys
 
 import subprocess
@@ -27,7 +28,7 @@ from topsbm.sbmtm import sbmtm
 from utils import embed_js
 import srsly
 
-__all__ = ['wrap']
+__all__ = ["wrap"]
 
 
 class ATAPWrapper(object):
@@ -37,23 +38,28 @@ class ATAPWrapper(object):
         self.attribs = attribs
 
     def serialise(self, file: PathLike[str] | IO):
-        """ Serialise with added topsbm attributes."""
+        """Serialise with added topsbm attributes."""
         attribs = dict()
         try:
             git_args = {
-                'origin': ['config', '--get', 'remote.origin.url'],
-                'commit': ['rev-parse', 'HEAD'],
+                "origin": ["config", "--get", "remote.origin.url"],
+                "commit": ["rev-parse", "HEAD"],
             }
             git = dict()
             for name, args in git_args.items():
-                git[name] = subprocess.check_output(['git'] + args).strip().decode('utf-8')
+                git[name] = (
+                    subprocess.check_output(["git"] + args).strip().decode("utf-8")
+                )
 
-            git['origin'] = git['origin'].replace("git@github.com:", "https://")
-            attribs['git'] = git
+            git["origin"] = git["origin"].replace("git@github.com:", "https://")
+            attribs["git"] = git
         except subprocess.CalledProcessError:
-            print("Failed to retrieve git information to be part of the Corpus attributes. Skipped.", file=sys.stderr)
-        attribs['data'] = self.attribs
-        self.corpus.attribute('topsbm', attribs)
+            print(
+                "Failed to retrieve git information to be part of the Corpus attributes. Skipped.",
+                file=sys.stderr,
+            )
+        attribs["data"] = self.attribs
+        self.corpus.attribute("topsbm", attribs)
         return self.corpus.serialise(file)
 
     def download(self):
@@ -74,12 +80,12 @@ def wrap(model: sbmtm, corpus: Corpus, used_dtm: str) -> ATAPWrapper:
     attributes = dict(word_clusters=dict(dtms=dict()), topic_dists=dict(metas=dict()))
     for cluster_idx, topic_dtm in topic_dtms.items():
         name = f"{used_dtm}_topsbm_lv{level}_cluster{cluster_idx}"
-        attributes["word_clusters"]['dtms'][cluster_idx] = name
+        attributes["word_clusters"]["dtms"][cluster_idx] = name
         corpus.add_dtm(topic_dtm, name)
     topic_dists: dict[int, np.ndarray[float]] = topic_dist_of(model, level)
     for topic_idx, topic_dist in topic_dists.items():
         name = f"topsbm_lv{level}_topic{topic_idx}"
-        attributes["topic_dists"]['metas'][topic_idx] = name
+        attributes["topic_dists"]["metas"][topic_idx] = name
         corpus.add_meta(topic_dist, name=name)
     return ATAPWrapper(model, corpus, attributes)
 
@@ -95,7 +101,7 @@ except Exception as _:
 
 _hierarchy_viz = {
     "radial-cluster": "./viz/radial-cluster.js",
-    "collapsible-tree": "./viz/collapsible-tree.js"
+    "collapsible-tree": "./viz/collapsible-tree.js",
 }
 
 
@@ -103,7 +109,8 @@ def visualise_blocks(model: sbmtm, kind: str) -> tuple[HTML, HTML]:
     if kind not in _hierarchy_viz.keys():
         raise ValueError(f"Must be either {', '.join(_hierarchy_viz.keys())}.")
     viz_js = _hierarchy_viz.get(kind)
-    if not Path(viz_js).exists(): raise FileNotFoundError(f"Missing viz js file. {viz_js}")
+    if not Path(viz_js).exists():
+        raise FileNotFoundError(f"Missing viz js file. {viz_js}")
     digraph_docs, digraph_word = group_membership_digraphs_of(model)
 
     digraph: nx.DiGraph
@@ -113,7 +120,7 @@ def visualise_blocks(model: sbmtm, kind: str) -> tuple[HTML, HTML]:
         roots = [node for node, in_degree in digraph.in_degree() if in_degree == 0]
         assert len(roots) == 1, "Expecting only 1 root"
         root = roots[0]
-        tmp = tempfile.mktemp(dir=tmpd, suffix='.json')
+        tmp = tempfile.mktemp(dir=tmpd, suffix=".json")
         srsly.write_json(tmp, nx.tree_data(digraph, root=root))
         tmp_data_files.append(tmp)
     return embed_js(viz_js, tmp_data_files[0]), embed_js(viz_js, tmp_data_files[1])
@@ -123,7 +130,7 @@ def visualise_blocks(model: sbmtm, kind: str) -> tuple[HTML, HTML]:
 
 
 def group_membership_digraphs_of(model: sbmtm) -> tuple[nx.DiGraph, nx.DiGraph]:
-    """ Produce a networkx DiGraph based on the group membership output from topSBM.
+    """Produce a networkx DiGraph based on the group membership output from topSBM.
     :arg model - a fitted topsbm.sbmtm model.
 
     :return Doc Digraph, Word DiGraph.
@@ -143,26 +150,43 @@ def group_membership_digraphs_of(model: sbmtm) -> tuple[nx.DiGraph, nx.DiGraph]:
         G.add_nodes_from(leaf_nodes)
         for level in range(0, len(model.state.levels)):
             memberships = model.group_membership(l=level)[idx]
-            assert len(leaf_nodes) == memberships.shape[1], \
-                f"Mismatched number of leaf nodes in group memberships for {type_}."
-            cluster_names = [prefix.format(level=level) + str(i) for i in range(memberships.shape[0])]
-            G.add_nodes_from(cluster_names, kind='cluster', level=level)
+            assert (
+                len(leaf_nodes) == memberships.shape[1]
+            ), f"Mismatched number of leaf nodes in group memberships for {type_}."
+            cluster_names = [
+                prefix.format(level=level) + str(i) for i in range(memberships.shape[0])
+            ]
+            G.add_nodes_from(cluster_names, kind="cluster", level=level)
             for cluster_idx in range(memberships.shape[0]):
                 for label_idx in range(memberships.shape[1]):
                     weight = memberships[cluster_idx, label_idx]
                     is_member = weight > 0
                     if is_member:
-                        leaf, cluster = leaf_nodes[label_idx], cluster_names[cluster_idx]
+                        leaf, cluster = (
+                            leaf_nodes[label_idx],
+                            cluster_names[cluster_idx],
+                        )
                         if level == 0:
                             G.add_edge(cluster, leaf, weight=weight)
                         else:
                             # 1. searches bottom up for all prior clusters of (layer - 1) connected to this leaf node.
                             # 2. add an edge from this cluster to all found prior clusters of (layer - 1)
-                            edges = [(src, tgt) for src, tgt in G.edges() if tgt == leaf]
+                            edges = [
+                                (src, tgt) for src, tgt in G.edges() if tgt == leaf
+                            ]
                             for l_tmp in range(1, level):
-                                prior_clusters = [src for src, _ in edges
-                                                  if src.startswith(prefix.format(level=str(l_tmp - 1)))]
-                                edges = [(src, tgt) for src, tgt in G.edges() if tgt in prior_clusters]
+                                prior_clusters = [
+                                    src
+                                    for src, _ in edges
+                                    if src.startswith(
+                                        prefix.format(level=str(l_tmp - 1))
+                                    )
+                                ]
+                                edges = [
+                                    (src, tgt)
+                                    for src, tgt in G.edges()
+                                    if tgt in prior_clusters
+                                ]
                             prior_clusters = [prior for prior, _ in edges]
                             for prior_cluster in prior_clusters:
                                 G.add_edge(cluster, prior_cluster, weight=weight)
@@ -171,24 +195,27 @@ def group_membership_digraphs_of(model: sbmtm) -> tuple[nx.DiGraph, nx.DiGraph]:
 
 
 def topic_dtms_of(model: sbmtm, level: int, from_dtm: DTM) -> dict[int, DTM]:
-    """ Produce DTMs of topics (word clusters) from the model.
+    """Produce DTMs of topics (word clusters) from the model.
     Used to add directly to Corpus via .add_dtm()
     """
     word_groups: np.ndarray = model.group_membership(l=level)[1]
-    assert from_dtm.num_terms == word_groups.shape[1], \
-        "Mismatched number of terms. Did you use this dtm to fit the model?"
+    assert (
+        from_dtm.num_terms == word_groups.shape[1]
+    ), "Mismatched number of terms. Did you use this dtm to fit the model?"
 
     dtms = dict()
     for wgroup_idx in range(word_groups.shape[0]):
-        dtms[wgroup_idx] = DTM.from_matrix(from_dtm.matrix.multiply(word_groups[wgroup_idx, :]), terms=from_dtm.terms)
+        dtms[wgroup_idx] = DTM.from_matrix(
+            from_dtm.matrix.multiply(word_groups[wgroup_idx, :]), terms=from_dtm.terms
+        )
     return dtms
 
 
 def topic_dist_of(model: sbmtm, level: int) -> dict[int, np.ndarray[float]]:
-    """ Produce a list of topic distributions
+    """Produce a list of topic distributions
     Used to add directly to Corpus via .add_meta()
     """
-    p_tw_d = model.get_groups(l=level)['p_tw_d']  # topic X doc
+    p_tw_d = model.get_groups(l=level)["p_tw_d"]  # topic X doc
     num_topics = p_tw_d.shape[0]
 
     topic_dists = dict()
