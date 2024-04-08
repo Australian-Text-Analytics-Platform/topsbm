@@ -66,7 +66,7 @@ def wrap(model: sbmtm, corpus: Corpus, used_dtm: str) -> ATAPWrapper:
     if not isinstance(corpus, Corpus):
         raise ValueError(f"Expecting Corpus for corpus but got {corpus}.")
     if model.g is None:
-        raise ValueError(f"Your model hasn't been fitted yet. Call .fit() on the model.")
+        raise ValueError("Your model hasn't been fitted yet. Call .fit() on the model.")
 
     # note: let's just only do this for level 0 for now.
     level = 0
@@ -108,7 +108,7 @@ def visualise_blocks(model: sbmtm, kind: str) -> tuple[HTML, HTML]:
 
     digraph: nx.DiGraph
     tmp_data_files = []
-    tmpd = tempfile.mkdtemp(dir="./." if JUPYTER_ALLOW_HIDDEN else "./")
+    tmpd = tempfile.mkdtemp(dir="./", prefix="." if JUPYTER_ALLOW_HIDDEN else "tmp")
     for digraph in [digraph_docs, digraph_word]:
         roots = [node for node, in_degree in digraph.in_degree() if in_degree == 0]
         assert len(roots) == 1, "Expecting only 1 root"
