@@ -17,7 +17,7 @@ from pathlib import Path
 import networkx as nx
 import numpy as np
 import tempfile
-from typing import IO
+from typing import IO, Callable
 from os import PathLike
 
 from atap_corpus import Corpus
@@ -222,3 +222,7 @@ def topic_dist_of(model: sbmtm, level: int) -> dict[int, np.ndarray[float]]:
     for topic_idx in range(num_topics):
         topic_dists[topic_idx] = p_tw_d[topic_idx, :]
     return topic_dists
+
+
+def to_list_of_terms(corpus: Corpus, tokeniser_fn: Callable) -> list[str]:
+    return corpus.docs().apply(tokeniser_fn).tolist()
