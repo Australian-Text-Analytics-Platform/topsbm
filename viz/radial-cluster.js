@@ -44,13 +44,27 @@ function build_radial_cluster(data) {
             .angle(d => d.x)
             .radius(d => d.y));
 
+    const layerZeroNodes = root.descendants().filter(d => d.height === 1);
+    const colorScale = d3.scaleOrdinal(layerZeroNodes.map(d => d.data.id), d3.schemeCategory10);  // cycle the 10 colours
+
     // Append nodes.
     svg.append("g")
         .selectAll()
         .data(root.descendants())
         .join("circle")
         .attr("transform", d => `rotate(${d.x * 180 / Math.PI - 90}) translate(${d.y},0)`)
-        .attr("fill", d => d.children ? "#555" : "#999")
+        .attr("fill", d => {
+            if (d.height > 1) {
+                // non-leaf nodes
+                return d3.color("grey")
+            } else if (d.height === 1) {
+                // 2nd outermost layer (level = 0)
+                return colorScale(d.data.id);
+            } else {
+                // leaf nodes
+                return colorScale(d.parent.data.id)
+            }
+        })
         .attr("r", 2.5);
 
     // Append labels.
