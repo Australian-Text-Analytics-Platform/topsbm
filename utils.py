@@ -2,6 +2,9 @@ from IPython.display import HTML
 from uuid import uuid4
 from copy import deepcopy
 
+import numpy as np
+from topsbm.sbmtm import sbmtm
+
 
 def embed_js(js_path: str, d3_json: str) -> HTML:
     """Embeds JS within HTML for the jupyter notebook.
@@ -71,3 +74,22 @@ def _progressive_merge(tree_data: dict, merge_level: int):
         for child in tree_data["children"]:
             _progressive_merge(child, merge_level)
     return tree_data
+
+
+def top_word_indices_for_level_0_clusters(model: sbmtm, top: int):
+    """Extract the top 'top' words for each level 0 cluster of the model and return their indices."""
+    dict_groups = model.get_groups(l=0)
+    num_clusters: int = dict_groups["Bw"]
+
+    top_word_indicies = list()
+    for cluster_idx in range(num_clusters):
+        # word probability vector for this cluster
+        p_w_ = dict_groups["p_w_tw"][:, cluster_idx]
+        # indices of top words in descending order based on probability
+        ind_w_ = np.argsort(p_w_)[::-1]
+        for word_idx in ind_w_[:top]:
+            if p_w_[word_idx] > 0:
+                top_word_indicies.append(word_idx)
+            else:
+                break
+    return top_word_indicies

@@ -26,7 +26,7 @@ from atap_corpus.parts.dtm import DTM
 from atap_corpus.utils import download
 from topsbm.sbmtm import sbmtm
 
-from utils import embed_js, progressive_merge
+from utils import embed_js, progressive_merge, top_word_indices_for_level_0_clusters
 import srsly
 
 __all__ = ["wrap"]
@@ -137,8 +137,8 @@ class Viz(object):
         tmp = tempfile.mktemp(dir=self.tmpd, suffix=".json")
         srsly.write_json(tmp, self.tree_data)
 
-        self.htmls: dict[int, tuple[HTML, str]] = {
-            0: (embed_js(self.hierarchy.value, tmp), tmp),
+        self.htmls: dict[int, tuple[HTML, str, dict]] = {
+            0: (embed_js(self.hierarchy.value, tmp), tmp, self.tree_data),
         }
 
     @property
@@ -167,7 +167,11 @@ class Viz(object):
                 if merge_level not in self.htmls.keys():
                     tmp = tempfile.mktemp(dir=self.tmpd, suffix=".json")
                     srsly.write_json(tmp, tree_data)
-                    self.htmls[merge_level] = (embed_js(self.hierarchy.value, tmp), tmp)
+                    self.htmls[merge_level] = (
+                        embed_js(self.hierarchy.value, tmp),
+                        tmp,
+                        tree_data,
+                    )
         return self.htmls[depth][0]
 
 
@@ -224,7 +228,6 @@ def group_membership_digraphs_of(
     corpus: Corpus,
     model: sbmtm,
     kind: GroupMembershipKind,
-    top: int | None = None,
 ) -> nx.DiGraph:
     """Produce a networkx DiGraph based on the group membership output from topSBM.
     :arg model - a fitted topsbm.sbmtm model.
@@ -244,14 +247,16 @@ def group_membership_digraphs_of(
         case GroupMembershipKind.DOCUMENTS:
             MEMBERSHIP_IDX = DOC_MEMBERSHIP_IDX
             leaf_nodes = model.documents
-            # metas: list[str] = corpus.metas
-            # print(f"found metas: {', '.join(metas)}")
-            # todo: Add meta data here (how to retrieve them?) - via corpus.
+            leaf_nodes_to_retain = leaf_nodes
+            label_indices = list(range(len(leaf_nodes)))
         case GroupMembershipKind.WORDS:
             MEMBERSHIP_IDX = WORD_MEMBERSHIP_IDX
-            if top is not None:
-                pass
             leaf_nodes = model.words
+            top_word_indices: list[int] = top_word_indices_for_level_0_clusters(
+                model, top=2
+            )
+            leaf_nodes_to_retain = [model.words[idx] for idx in top_word_indices]
+            label_indices = top_word_indices
         case _:
             raise NotImplementedError(
                 f"{kind} is not valid. Either {', '.join([k.value for k in GroupMembershipKind])}"
@@ -259,8 +264,8 @@ def group_membership_digraphs_of(
 
     LEVEL_PREFIX = "Level_{level}_"
     G = nx.DiGraph()
-
-    G.add_nodes_from(leaf_nodes)
+    G.add_nodes_from(leaf_nodes_to_retain)
+    print(f"Number of leaf nodes: {len(leaf_nodes_to_retain)}.")
 
     # now, all the edges between the nodes
     for level in range(0, len(model.state.levels)):
@@ -275,7 +280,7 @@ def group_membership_digraphs_of(
         }
         G.add_nodes_from(cluster_names, **metadata)
         for cluster_idx in range(memberships.shape[0]):
-            for label_idx in range(memberships.shape[1]):
+            for label_idx in label_indices:
                 weight = memberships[cluster_idx, label_idx]
                 is_member = weight > 0
                 if is_member:
