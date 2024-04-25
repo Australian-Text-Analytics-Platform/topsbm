@@ -76,9 +76,13 @@ def _progressive_merge(tree_data: dict, merge_level: int):
     return tree_data
 
 
-def top_word_indices_for_level_0_clusters(model: sbmtm, top: int):
+def top_word_indices_for_level(
+    model: sbmtm,
+    top: int,
+    level: int,
+) -> list[int]:
     """Extract the top 'top' words for each level 0 cluster of the model and return their indices."""
-    dict_groups = model.get_groups(l=0)
+    dict_groups = model.get_groups(l=level)
     num_clusters: int = dict_groups["Bw"]
 
     top_word_indicies = list()

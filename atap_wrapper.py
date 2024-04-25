@@ -26,7 +26,7 @@ from atap_corpus.parts.dtm import DTM
 from atap_corpus.utils import download
 from topsbm.sbmtm import sbmtm
 
-from utils import embed_js, progressive_merge, top_word_indices_for_level_0_clusters
+from utils import embed_js, progressive_merge, top_word_indices_for_level
 import srsly
 
 __all__ = ["wrap"]
@@ -180,6 +180,8 @@ def visualise(
     corpus: Corpus,
     kind: str | GroupMembershipKind,
     hierarchy: str | Hierarchy,
+    top_words_for_level: int = 0,
+    top_num_words: int = 5,
 ) -> Viz:
     try:
         hierarchy: Hierarchy = Hierarchy[
@@ -210,6 +212,8 @@ def visualise(
                 corpus,
                 model,
                 kind=GroupMembershipKind.WORDS,
+                top_num_words=top_num_words,
+                top_words_for_level=top_words_for_level,
             )
         case _:
             raise NotImplementedError(f"{kind} is not implemented.")
@@ -228,6 +232,8 @@ def group_membership_digraphs_of(
     corpus: Corpus,
     model: sbmtm,
     kind: GroupMembershipKind,
+    top_words_for_level: int = 0,
+    top_num_words: int = 1,
 ) -> nx.DiGraph:
     """Produce a networkx DiGraph based on the group membership output from topSBM.
     :arg model - a fitted topsbm.sbmtm model.
@@ -252,8 +258,8 @@ def group_membership_digraphs_of(
         case GroupMembershipKind.WORDS:
             MEMBERSHIP_IDX = WORD_MEMBERSHIP_IDX
             leaf_nodes = model.words
-            top_word_indices: list[int] = top_word_indices_for_level_0_clusters(
-                model, top=2
+            top_word_indices: list[int] = top_word_indices_for_level(
+                model, top=top_num_words, level=top_words_for_level
             )
             leaf_nodes_to_retain = [model.words[idx] for idx in top_word_indices]
             label_indices = top_word_indices
@@ -265,7 +271,6 @@ def group_membership_digraphs_of(
     LEVEL_PREFIX = "Level_{level}_"
     G = nx.DiGraph()
     G.add_nodes_from(leaf_nodes_to_retain)
-    print(f"Number of leaf nodes: {len(leaf_nodes_to_retain)}.")
 
     # now, all the edges between the nodes
     for level in range(0, len(model.state.levels)):
