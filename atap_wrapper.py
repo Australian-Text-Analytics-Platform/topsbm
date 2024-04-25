@@ -8,17 +8,18 @@ It provides the following:
 """
 
 import sys
-
 import subprocess
+import tempfile
+from enum import Enum
+from os import PathLike
+from pathlib import Path
+from typing import IO, Callable
 
 from IPython.display import HTML
-from pathlib import Path
 
 import networkx as nx
 import numpy as np
-import tempfile
-from typing import IO, Callable
-from os import PathLike
+from tqdm.auto import tqdm
 
 from atap_corpus import Corpus
 from atap_corpus.parts.dtm import DTM
@@ -100,36 +101,72 @@ except Exception as _:
     pass
 
 _hierarchy_viz = {
-    "radial-cluster": "./viz/radial-cluster.js",
-    "collapsible-tree": "./viz/collapsible-tree.js",
+    "radial": "./viz/radial-cluster.js",
+    "tree": "./viz/collapsible-tree.js",
 }
 
 
-def visualise_blocks(model: sbmtm, kind: str) -> tuple[HTML, HTML]:
-    if kind not in _hierarchy_viz.keys():
+class GroupMembershipKind(str, Enum):
+    DOCUMENTS: str = "documents"
+    WORDS: str = "words"
+
+
+def visualise(
+    corpus: Corpus,
+    model: sbmtm,
+    kind: str | GroupMembershipKind,
+    hierarchy: str,
+    depth: int = 0,  # todo: ability to filter by depth, first construct the JSON and then reconstruct with depth.
+) -> HTML:
+    hierarchy = hierarchy.lower()
+    if hierarchy not in _hierarchy_viz.keys():
         raise ValueError(f"Must be either {', '.join(_hierarchy_viz.keys())}.")
-    viz_js = _hierarchy_viz.get(kind)
+    viz_js = _hierarchy_viz.get(hierarchy)
     if not Path(viz_js).exists():
         raise FileNotFoundError(f"Missing viz js file. {viz_js}")
-    digraph_docs, digraph_word = group_membership_digraphs_of(model)
-
+    try:
+        kind: GroupMembershipKind = GroupMembershipKind[
+            kind.upper() if isinstance(kind, str) else kind
+        ]
+    except Exception as e:
+        raise ValueError(
+            f"{kind} is not valid. Either {', '.join([k.value for k in GroupMembershipKind])}"
+        )
     digraph: nx.DiGraph
-    tmp_data_files = []
+    match kind:
+        case GroupMembershipKind.DOCUMENTS:
+            digraph = group_membership_digraphs_of(
+                corpus,
+                model,
+                kind=GroupMembershipKind.DOCUMENTS,
+            )
+        case GroupMembershipKind.WORDS:
+            digraph = group_membership_digraphs_of(
+                corpus,
+                model,
+                kind=GroupMembershipKind.WORDS,
+            )
+        case _:
+            raise NotImplementedError(f"{kind} is not implemented.")
+
     tmpd = tempfile.mkdtemp(dir="./", prefix="." if JUPYTER_ALLOW_HIDDEN else "tmp")
-    for digraph in [digraph_docs, digraph_word]:
-        roots = [node for node, in_degree in digraph.in_degree() if in_degree == 0]
-        assert len(roots) == 1, "Expecting only 1 root"
-        root = roots[0]
-        tmp = tempfile.mktemp(dir=tmpd, suffix=".json")
-        srsly.write_json(tmp, nx.tree_data(digraph, root=root))
-        tmp_data_files.append(tmp)
-    return embed_js(viz_js, tmp_data_files[0]), embed_js(viz_js, tmp_data_files[1])
+    roots = [node for node, in_degree in digraph.in_degree() if in_degree == 0]
+    assert len(roots) == 1, "Expecting only 1 root"
+    root = roots[0]
+    tmp = tempfile.mktemp(dir=tmpd, suffix=".json")
+    srsly.write_json(tmp, nx.tree_data(digraph, root=root))
+    # todo: here, allow multiple depths to be created.
+    return embed_js(viz_js, tmp)
 
 
 # --- Data Adapters (from TopSBM to ATAP Corpus) ---
 
-
-def group_membership_digraphs_of(model: sbmtm) -> tuple[nx.DiGraph, nx.DiGraph]:
+def group_membership_digraphs_of(
+    corpus: Corpus,
+    model: sbmtm,
+    kind: GroupMembershipKind,
+    top: int | None = None,
+) -> nx.DiGraph:
     """Produce a networkx DiGraph based on the group membership output from topSBM.
     :arg model - a fitted topsbm.sbmtm model.
 
@@ -140,58 +177,72 @@ def group_membership_digraphs_of(model: sbmtm) -> tuple[nx.DiGraph, nx.DiGraph]:
 
     Group memberships are retrieved via sbmtm.group_membership(l=<level>) method.
     """
-    Gs: list[nx.DiGraph] = list()
-    type_labels = [model.documents, model.words]
+    DOC_MEMBERSHIP_IDX, WORD_MEMBERSHIP_IDX = 0, 1
 
-    prefix = "Level_{level}_"
-    for idx, type_ in enumerate(["documents", "words"]):
-        G = nx.DiGraph()
-        leaf_nodes = type_labels[idx]
-        G.add_nodes_from(leaf_nodes)
-        for level in range(0, len(model.state.levels)):
-            memberships = model.group_membership(l=level)[idx]
-            assert (
-                len(leaf_nodes) == memberships.shape[1]
-            ), f"Mismatched number of leaf nodes in group memberships for {type_}."
-            cluster_names = [
-                prefix.format(level=level) + str(i) for i in range(memberships.shape[0])
-            ]
-            G.add_nodes_from(cluster_names, kind="cluster", level=level)
-            for cluster_idx in range(memberships.shape[0]):
-                for label_idx in range(memberships.shape[1]):
-                    weight = memberships[cluster_idx, label_idx]
-                    is_member = weight > 0
-                    if is_member:
-                        leaf, cluster = (
-                            leaf_nodes[label_idx],
-                            cluster_names[cluster_idx],
-                        )
-                        if level == 0:
-                            G.add_edge(cluster, leaf, weight=weight)
-                        else:
-                            # 1. searches bottom up for all prior clusters of (layer - 1) connected to this leaf node.
-                            # 2. add an edge from this cluster to all found prior clusters of (layer - 1)
-                            edges = [
-                                (src, tgt) for src, tgt in G.edges() if tgt == leaf
+    MEMBERSHIP_IDX: int
+    leaf_nodes: list[str]
+    match kind:
+        case GroupMembershipKind.DOCUMENTS:
+            MEMBERSHIP_IDX = DOC_MEMBERSHIP_IDX
+            leaf_nodes = model.documents
+            # metas: list[str] = corpus.metas
+            # print(f"found metas: {', '.join(metas)}")
+            # todo: Add meta data here (how to retrieve them?) - via corpus.
+        case GroupMembershipKind.WORDS:
+            MEMBERSHIP_IDX = WORD_MEMBERSHIP_IDX
+            if top is not None:
+                pass
+            leaf_nodes = model.words
+        case _:
+            raise NotImplementedError(
+                f"{kind} is not valid. Either {', '.join([k.value for k in GroupMembershipKind])}"
+            )
+
+    LEVEL_PREFIX = "Level_{level}_"
+    G = nx.DiGraph()
+
+    G.add_nodes_from(leaf_nodes)
+
+    # now, all the edges between the nodes
+    for level in range(0, len(model.state.levels)):
+        memberships = model.group_membership(l=level)[MEMBERSHIP_IDX]
+        cluster_names = [
+            LEVEL_PREFIX.format(level=level) + str(i)
+            for i in range(memberships.shape[0])
+        ]
+        G.add_nodes_from(cluster_names, kind="cluster", level=level)
+        for cluster_idx in range(memberships.shape[0]):
+            for label_idx in range(memberships.shape[1]):
+                weight = memberships[cluster_idx, label_idx]
+                is_member = weight > 0
+                if is_member:
+                    leaf, cluster = (
+                        leaf_nodes[label_idx],
+                        cluster_names[cluster_idx],
+                    )
+                    if level == 0:
+                        G.add_edge(cluster, leaf, weight=weight)
+                    else:
+                        # 1. searches bottom up for all prior clusters of (layer - 1) connected to this leaf node.
+                        # 2. add an edge from this cluster to all found prior clusters of (layer - 1)
+                        edges = [(src, tgt) for src, tgt in G.edges() if tgt == leaf]
+                        for l_tmp in range(1, level):
+                            prior_clusters = [
+                                src
+                                for src, _ in edges
+                                if src.startswith(
+                                    LEVEL_PREFIX.format(level=str(l_tmp - 1))
+                                )
                             ]
-                            for l_tmp in range(1, level):
-                                prior_clusters = [
-                                    src
-                                    for src, _ in edges
-                                    if src.startswith(
-                                        prefix.format(level=str(l_tmp - 1))
-                                    )
-                                ]
-                                edges = [
-                                    (src, tgt)
-                                    for src, tgt in G.edges()
-                                    if tgt in prior_clusters
-                                ]
-                            prior_clusters = [prior for prior, _ in edges]
-                            for prior_cluster in prior_clusters:
-                                G.add_edge(cluster, prior_cluster, weight=weight)
-        Gs.append(G)
-    return tuple(Gs)
+                            edges = [
+                                (src, tgt)
+                                for src, tgt in G.edges()
+                                if tgt in prior_clusters
+                            ]
+                        prior_clusters = [prior for prior, _ in edges]
+                        for prior_cluster in prior_clusters:
+                            G.add_edge(cluster, prior_cluster, weight=weight)
+    return G
 
 
 def topic_dtms_of(model: sbmtm, level: int, from_dtm: DTM) -> dict[int, DTM]:
