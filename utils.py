@@ -34,49 +34,38 @@ def embed_js(js_path: str, d3_json: str) -> HTML:
     return HTML(html)
 
 
-MAX_MERGE_LEVEL_FROM_MAX_DEPTH: int = -2
-
-
 def progressive_merge(tree_data: dict) -> dict[int, dict]:
-    """Progressively merges the tree data dictionaries based on their depths.
-    Outputs a number of merged tree_data for all possible depths.
-
-    Currently, it'll only allow up to max depth/level - 2.
-    e.g. max level = 5, we'll have clusters of lvl 0, lvl 1, lvl 2.
     """
-    min_level: int = 0
+    Progressively merges the tree data dictionaries for all levels.
+
+    This outputs a dictionary where keys are merge levels.
+    i.e.
+        key=1, then all children of level < 1 are merged into level 1.
+        key=2, then all children of level < 2 are merged into level 2.
+        key=0 is the same provided tree_data.
+    """
+    all_merged_tree_data: dict[int, dict] = dict()
+
+    all_merged_tree_data[0] = tree_data
     max_level: int = tree_data["level"]
-
-    # todo: get first child, access level, loop until level = 1
-    #   get all children of level 1 and merge the list.
-    #   now, this means level 1 will have a list of ids instead of clusters.
-    #   do this for all level 1s
-
-    # so, get to level 1, and then merge children. Assign level one children to merged children.
-    # for each child in level 5, then each child in level 4, each child in level 3
-    merged_0 = deepcopy(tree_data)
-    merged_0 = _progressive_merge_leafs(merged_0, merge_level=1)
-
-    return dict()
+    tmp_merged_tree_data = deepcopy(tree_data)
+    for merge_level in range(1, max_level + 1):
+        tmp_merged_tree_data: dict = _progressive_merge(
+            tmp_merged_tree_data, merge_level=merge_level
+        )
+        all_merged_tree_data[merge_level] = deepcopy(tmp_merged_tree_data)
+    return all_merged_tree_data
 
 
-def _progressive_merge_leafs(tree_data: dict, merge_level: int):
+def _progressive_merge(tree_data: dict, merge_level: int):
     if tree_data["level"] == (merge_level - 1):
         return tree_data["children"]
     elif tree_data["level"] == merge_level:
         merged = list()
         for child in tree_data["children"]:
-            merged.extend(_progressive_merge_leafs(child, merge_level))
+            merged.extend(_progressive_merge(child, merge_level))
         tree_data["children"] = merged
     else:
         for child in tree_data["children"]:
-            _progressive_merge_leafs(child, merge_level)
-        return tree_data
-
-
-def _merge_children(children: list[dict]) -> list[dict]:
-    # note: if level=-1, there won't be children.
-    return list(
-        [inner_child for child in children for inner_child in child["children"]]
-    )
-
+            _progressive_merge(child, merge_level)
+    return tree_data
