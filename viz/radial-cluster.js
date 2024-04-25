@@ -36,7 +36,7 @@ function build_radial_cluster(data) {
     const colorScale = d3.scaleOrdinal(secondOuterMostNodes.map(d => d.data.id), d3.schemeCategory10);  // cycle the 10 colours
 
     // Append links.
-    svg.append("g")
+    const linkSelection = svg.append("g")
         .attr("fill", "none")
         .attr("stroke", "#555")
         .attr("stroke-opacity", 0.4)
@@ -120,30 +120,17 @@ function build_radial_cluster(data) {
     });
 
     outerMostNodesSelection
-        .attr("transform", d => `rotate(${d.x * 180 / Math.PI - 90}) translate(${d.y},0)`)
-        .on("mouseover", (event, d) => {
-            outerMostNodesSelection.style("opacity", (n) => {
-                const thisCategory = d.data.category
-                const category = n.data.category;
-                if (category !== null && category !== undefined) {
-                    return thisCategory === category ? 1 : 0.2;
-                } else {
-                    return 1;
-                }
-            })
-        })
-        .on("mouseout", () => {
-            outerMostNodesSelection.style("opacity", 1);
-        });
+        .attr("transform", d => `rotate(${d.x * 180 / Math.PI - 90}) translate(${d.y},0)`);
+
     // only works if there are categories.
     // nodes not in the same category, reduce opacity to 0.2 on mouseover temporarily.
 
     // Append labels.
-    svg.append("g")
+    const labelSelection = svg.append("g")
         .attr("stroke-linejoin", "round")
         .attr("stroke-width", 3)
         .selectAll()
-        .data(root.descendants())
+        .data(outerMostNodes)
         .join("text")
         .attr("transform", d => `rotate(${d.x * 180 / Math.PI - 90}) translate(${d.y},0) rotate(${d.x >= Math.PI ? 180 : 0})`)
         .attr("dy", "0.31em")
@@ -156,6 +143,30 @@ function build_radial_cluster(data) {
         })
         .text(d => d.data.id)
         .attr("font-size", "4.5px")
+
+    outerMostNodesSelection
+        .on("mouseover", (event, d) => {
+            const activeCategory = d.data.category;
+            if (activeCategory !== null && activeCategory !== undefined) {
+                outerMostNodesSelection.style("opacity", (n) => {
+                    return n.data.category === activeCategory ? 1 : 0.2;
+                })
+                linkSelection.style(
+                    "opacity",
+                    (l) => (l.source.data.category === activeCategory || l.target.data.category === activeCategory) ? 1 : 0.2
+                )
+                labelSelection.style(
+                    "opacity",
+                    (label) => label.data.category === activeCategory ? 1 : 0.2
+                )
+            }
+        })
+        .on("mouseout", () => {
+            outerMostNodesSelection.style("opacity", 1);
+            linkSelection.style("opacity", 1);
+            labelSelection.style("opacity", 1);
+        });
+
     return svg;
 }
 
