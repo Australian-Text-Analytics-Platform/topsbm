@@ -73,7 +73,7 @@ function build_radial_cluster(data) {
                 return colorScale(d.parent.data.id)
             }
         })
-        .attr("r", 2.5);
+        .attr("r", 1.0);
 
     // Append labels.
     svg.append("g")
