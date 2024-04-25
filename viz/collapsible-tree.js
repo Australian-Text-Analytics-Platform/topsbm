@@ -146,7 +146,7 @@ function build_collapsible_tree(data) {
         d._children = d.children;
 
         // note: below line came from D3 template and arbitrarily sets some nodes to not be expanded.
-        // if (d.depth && d.data.name.length > 7) d.children = null;
+        if (d.depth && d.data.name.length > 7) d.children = null;
     });
 
     update(null, root);
