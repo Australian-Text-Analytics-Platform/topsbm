@@ -32,8 +32,8 @@ function build_radial_cluster(data) {
         .attr("style", "width: 100%; height: auto; font: 10px sans-serif;");
 
 
-    const layerZeroNodes = root.descendants().filter(d => d.height === 1);
-    const colorScale = d3.scaleOrdinal(layerZeroNodes.map(d => d.data.id), d3.schemeCategory10);  // cycle the 10 colours
+    const secondOuterMostNodes = root.descendants().filter(d => d.height === 1);
+    const colorScale = d3.scaleOrdinal(secondOuterMostNodes.map(d => d.data.id), d3.schemeCategory10);  // cycle the 10 colours
 
     // Append links.
     svg.append("g")
@@ -75,6 +75,7 @@ function build_radial_cluster(data) {
         })
         .attr("r", 1.0);
 
+    const outerMostNodes = root.descendants().filter(d => d.height === 0);
 
     var shapes = [
         d3.symbolCircle,
@@ -94,33 +95,48 @@ function build_radial_cluster(data) {
 
     var categoryToShape = {};
 
-    svg.append("g")
+    const outerMostNodesSelection = svg.append("g")
         .selectAll()
-        .data(root.descendants().filter(d => d.height === 0))
-        .join((enter) => {
-            const e = enter.append('g');
-            e.each(function (d) {
-                const group = d3.select(this);
-                const category = d.data.category;
-                console.log(`GOT CATEGORY: ${category} for ${d.data.id}`)
+        .data(outerMostNodes)
+        .join("g");
+
+    outerMostNodesSelection.each(function (d) {
+        const group = d3.select(this);
+        const category = d.data.category;
+        console.log(`GOT CATEGORY: ${category} for ${d.data.id}`)
+        if (category !== null && category !== undefined) {
+            if (!categoryToShape.hasOwnProperty(category)) {
+                categoryToShape[category] = shapes[shapeIdx % shapes.length];
+                shapeIdx++;
+            }
+            group.append('path')
+                .attr('d', d3.symbol().type(categoryToShape[category]).size(8))
+                .attr('fill', colorScale(d.parent.data.id));
+        } else {
+            group.append('circle')
+                .attr('fill', colorScale(d.parent.data.id))
+                .attr('r', 1.0);
+        }
+    });
+
+    outerMostNodesSelection
+        .attr("transform", d => `rotate(${d.x * 180 / Math.PI - 90}) translate(${d.y},0)`)
+        .on("mouseover", (event, d) => {
+            outerMostNodesSelection.style("opacity", (n) => {
+                const thisCategory = d.data.category
+                const category = n.data.category;
                 if (category !== null && category !== undefined) {
-                    if (!categoryToShape.hasOwnProperty(category)) {
-                        categoryToShape[category] = shapes[shapeIdx % shapes.length];
-                        shapeIdx++;
-                    }
-                    group.append('path')
-                        .attr('d', d3.symbol().type(categoryToShape[category]).size(8))
-                        .attr('fill', colorScale(d.parent.data.id));
+                    return thisCategory === category ? 1 : 0.2;
                 } else {
-                    group.append('circle')
-                        .attr('fill', colorScale(d.parent.data.id))
-                        .attr('r', 1.0);
+                    return 1;
                 }
             })
-            return e;
         })
-        .attr("transform", d => `rotate(${d.x * 180 / Math.PI - 90}) translate(${d.y},0)`);
-
+        .on("mouseout", () => {
+            outerMostNodesSelection.style("opacity", 1);
+        });
+    // only works if there are categories.
+    // nodes not in the same category, reduce opacity to 0.2 on mouseover temporarily.
 
     // Append labels.
     svg.append("g")
