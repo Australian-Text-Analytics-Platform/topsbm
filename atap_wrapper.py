@@ -26,7 +26,7 @@ from atap_corpus.parts.dtm import DTM
 from atap_corpus.utils import download
 from topsbm.sbmtm import sbmtm
 
-from utils import embed_js
+from utils import embed_js, progressive_merge
 import srsly
 
 __all__ = ["wrap"]
@@ -100,10 +100,10 @@ try:
 except Exception as _:
     pass
 
-_hierarchy_viz = {
-    "radial": "./viz/radial-cluster.js",
-    "tree": "./viz/collapsible-tree.js",
-}
+
+class Hierarchy(str, Enum):
+    RADIAL = "./viz/radial-cluster.js"
+    TREE = "./viz/collapsible-tree.js"
 
 
 class GroupMembershipKind(str, Enum):
@@ -111,19 +111,63 @@ class GroupMembershipKind(str, Enum):
     WORDS: str = "words"
 
 
+class Viz(object):
+    def __init__(
+        self,
+        kind: GroupMembershipKind,
+        hierarchy: Hierarchy,
+        digraph: nx.DiGraph,
+    ):
+        self.kind = kind
+        self.hierarchy = hierarchy
+        self.digraph = digraph
+
+        roots = [node for node, in_degree in digraph.in_degree() if in_degree == 0]
+        assert len(roots) == 1, "Expecting only 1 root"
+        root = roots[0]
+        self.tree_data = nx.tree_data(digraph, root=root)
+
+        global JUPYTER_ALLOW_HIDDEN
+        self.tmpd = tempfile.mkdtemp(
+            dir="./", prefix="." if JUPYTER_ALLOW_HIDDEN else "tmp"
+        )
+        tmp = tempfile.mktemp(dir=self.tmpd, suffix=".json")
+        srsly.write_json(tmp, self.tree_data)
+
+        self.htmls: dict[int, tuple[HTML, str]] = {
+            0: (embed_js(self.hierarchy.value, tmp), tmp),
+        }
+
+    def display(self, depth: int = 0):
+        max_level = self.tree_data["level"]
+        if depth > max_level:
+            raise ValueError(
+                f"TopSBM have only inferred a maximum depth of {max_level}."
+            )
+        if depth not in self.htmls.keys():
+            merged_tree_data: dict = progressive_merge(self.tree_data)
+            for merge_level, tree_data in merged_tree_data.items():
+                if merge_level not in self.htmls.keys():
+                    tmp = tempfile.mktemp(dir=self.tmpd, suffix=".json")
+                    srsly.write_json(tmp, tree_data)
+                    self.htmls[merge_level] = (embed_js(self.hierarchy.value, tmp), tmp)
+        return self.htmls[depth][0]
+
+
 def visualise(
-    corpus: Corpus,
     model: sbmtm,
+    corpus: Corpus,
     kind: str | GroupMembershipKind,
-    hierarchy: str,
-    depth: int = 0,  # todo: ability to filter by depth, first construct the JSON and then reconstruct with depth.
-) -> HTML:
-    hierarchy = hierarchy.lower()
-    if hierarchy not in _hierarchy_viz.keys():
-        raise ValueError(f"Must be either {', '.join(_hierarchy_viz.keys())}.")
-    viz_js = _hierarchy_viz.get(hierarchy)
-    if not Path(viz_js).exists():
-        raise FileNotFoundError(f"Missing viz js file. {viz_js}")
+    hierarchy: str | Hierarchy,
+) -> Viz:
+    try:
+        hierarchy: Hierarchy = Hierarchy[
+            hierarchy.upper() if isinstance(hierarchy, str) else hierarchy
+        ]
+    except ValueError:
+        raise ValueError(
+            f"hierarchy must be one of {', '.join([h.name.lower() for h in Hierarchy])}'"
+        )
     try:
         kind: GroupMembershipKind = GroupMembershipKind[
             kind.upper() if isinstance(kind, str) else kind
@@ -149,17 +193,15 @@ def visualise(
         case _:
             raise NotImplementedError(f"{kind} is not implemented.")
 
-    tmpd = tempfile.mkdtemp(dir="./", prefix="." if JUPYTER_ALLOW_HIDDEN else "tmp")
-    roots = [node for node, in_degree in digraph.in_degree() if in_degree == 0]
-    assert len(roots) == 1, "Expecting only 1 root"
-    root = roots[0]
-    tmp = tempfile.mktemp(dir=tmpd, suffix=".json")
-    srsly.write_json(tmp, nx.tree_data(digraph, root=root))
-    # todo: here, allow multiple depths to be created.
-    return embed_js(viz_js, tmp)
+    return Viz(
+        kind=kind,
+        hierarchy=hierarchy,
+        digraph=digraph,
+    )
 
 
 # --- Data Adapters (from TopSBM to ATAP Corpus) ---
+
 
 def group_membership_digraphs_of(
     corpus: Corpus,
