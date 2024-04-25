@@ -138,11 +138,14 @@ class Viz(object):
             0: (embed_js(self.hierarchy.value, tmp), tmp),
         }
 
+    @property
+    def max_depth(self):
+        return self.tree_data["level"]
+
     def display(self, depth: int = 0):
-        max_level = self.tree_data["level"]
-        if depth > max_level:
+        if depth > self.max_depth:
             raise ValueError(
-                f"TopSBM have only inferred a maximum depth of {max_level}."
+                f"TopSBM have only inferred a maximum depth of {self.max_depth}."
             )
         if depth not in self.htmls.keys():
             merged_tree_data: dict = progressive_merge(self.tree_data)
