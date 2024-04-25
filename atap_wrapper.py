@@ -102,6 +102,7 @@ except Exception as _:
 
 # constants
 _LEVEL_META_KEY: str = "level"
+_IS_ROOT_META_KEY: str = "is_root"
 
 
 class Hierarchy(str, Enum):
@@ -125,9 +126,11 @@ class Viz(object):
         self.hierarchy = hierarchy
         self.digraph = digraph
 
-        roots = [node for node, in_degree in digraph.in_degree() if in_degree == 0]
+        global _IS_ROOT_META_KEY
+        roots = [node for node in digraph if digraph.nodes[node].get(_IS_ROOT_META_KEY, False)]
         assert len(roots) == 1, "Expecting only 1 root"
         root = roots[0]
+
         self.tree_data = nx.tree_data(digraph, root=root)
 
         global JUPYTER_ALLOW_HIDDEN
@@ -245,6 +248,9 @@ def group_membership_digraphs_of(
 
     Group memberships are retrieved via sbmtm.group_membership(l=<level>) method.
     """
+    global _LEVEL_META_KEY
+    global _IS_ROOT_META_KEY
+
     DOC_MEMBERSHIP_IDX, WORD_MEMBERSHIP_IDX = 0, 1
 
     MEMBERSHIP_IDX: int
@@ -282,6 +288,7 @@ def group_membership_digraphs_of(
         metadata: dict[str, Any] = {
             "kind": "cluster",
             _LEVEL_META_KEY: level,
+            _IS_ROOT_META_KEY: level == (len(model.state.levels) - 1),
         }
         G.add_nodes_from(cluster_names, **metadata)
         for cluster_idx in range(memberships.shape[0]):
