@@ -13,7 +13,7 @@ import tempfile
 from enum import Enum
 from os import PathLike
 from pathlib import Path
-from typing import IO, Callable
+from typing import IO, Callable, Any
 
 from IPython.display import HTML
 
@@ -100,6 +100,9 @@ try:
 except Exception as _:
     pass
 
+# constants
+_LEVEL_META_KEY: str = "level"
+
 
 class Hierarchy(str, Enum):
     RADIAL = "./viz/radial-cluster.js"
@@ -139,16 +142,27 @@ class Viz(object):
         }
 
     @property
-    def max_depth(self):
-        return self.tree_data["level"]
+    def min_depth(self) -> int:
+        return 0
+
+    @property
+    def max_depth(self) -> int:
+        global _LEVEL_META_KEY
+        return self.tree_data[_LEVEL_META_KEY]
 
     def display(self, depth: int = 0):
         if depth > self.max_depth:
             raise ValueError(
                 f"TopSBM have only inferred a maximum depth of {self.max_depth}."
             )
+        if depth < self.min_depth:
+            raise ValueError("TopSBM have a minimum of depth 0.")
+
         if depth not in self.htmls.keys():
-            merged_tree_data: dict = progressive_merge(self.tree_data)
+            global _LEVEL_META_KEY
+            merged_tree_data: dict = progressive_merge(
+                self.tree_data, level_key=_LEVEL_META_KEY
+            )
             for merge_level, tree_data in merged_tree_data.items():
                 if merge_level not in self.htmls.keys():
                     tmp = tempfile.mktemp(dir=self.tmpd, suffix=".json")
@@ -255,7 +269,11 @@ def group_membership_digraphs_of(
             LEVEL_PREFIX.format(level=level) + str(i)
             for i in range(memberships.shape[0])
         ]
-        G.add_nodes_from(cluster_names, kind="cluster", level=level)
+        metadata: dict[str, Any] = {
+            "kind": "cluster",
+            _LEVEL_META_KEY: level,
+        }
+        G.add_nodes_from(cluster_names, **metadata)
         for cluster_idx in range(memberships.shape[0]):
             for label_idx in range(memberships.shape[1]):
                 weight = memberships[cluster_idx, label_idx]
