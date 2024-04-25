@@ -31,6 +31,10 @@ function build_radial_cluster(data) {
         .attr("viewBox", [-cx, -cy, width, height])
         .attr("style", "width: 100%; height: auto; font: 10px sans-serif;");
 
+
+    const layerZeroNodes = root.descendants().filter(d => d.height === 1);
+    const colorScale = d3.scaleOrdinal(layerZeroNodes.map(d => d.data.id), d3.schemeCategory10);  // cycle the 10 colours
+
     // Append links.
     svg.append("g")
         .attr("fill", "none")
@@ -42,10 +46,14 @@ function build_radial_cluster(data) {
         .join("path")
         .attr("d", d3.linkRadial()
             .angle(d => d.x)
-            .radius(d => d.y));
-
-    const layerZeroNodes = root.descendants().filter(d => d.height === 1);
-    const colorScale = d3.scaleOrdinal(layerZeroNodes.map(d => d.data.id), d3.schemeCategory10);  // cycle the 10 colours
+            .radius(d => d.y))
+        .attr("stroke", d => {
+            if (d.target.height !== 0) {
+                return d3.color("grey")
+            } else {
+                return colorScale(d.target.parent.data.id)
+            }
+        });
 
     // Append nodes.
     svg.append("g")
@@ -80,14 +88,10 @@ function build_radial_cluster(data) {
         .attr("text-anchor", d => d.x < Math.PI === !d.children ? "start" : "end")
         .attr("paint-order", "stroke")
         .attr("stroke", "white")
-        .attr("fill", "currentColor")
-        .text(d => {
-            if (d.data.name !== undefined) {
-                return d.data.name
-            } else {
-                return d.data.id
-            }
+        .attr("fill", d => {
+            return "currentColor"
         })
+        .text(d => d.data.id)
         .attr("font-size", "4.5px")
     return svg;
 }
