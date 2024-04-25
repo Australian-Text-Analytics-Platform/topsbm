@@ -187,6 +187,7 @@ def visualise(
     corpus: Corpus,
     kind: str | GroupMembershipKind,
     hierarchy: str | Hierarchy,
+    categories: list[str] | None = None,
     top_words_for_level: int = 0,
     top_num_words: int = 5,
 ) -> Viz:
@@ -213,12 +214,14 @@ def visualise(
                 corpus,
                 model,
                 kind=GroupMembershipKind.DOCUMENTS,
+                categories=categories,
             )
         case GroupMembershipKind.WORDS:
             digraph = group_membership_digraphs_of(
                 corpus,
                 model,
                 kind=GroupMembershipKind.WORDS,
+                categories=categories,
                 top_num_words=top_num_words,
                 top_words_for_level=top_words_for_level,
             )
@@ -239,6 +242,7 @@ def group_membership_digraphs_of(
     corpus: Corpus,
     model: sbmtm,
     kind: GroupMembershipKind,
+    categories: list[str] | None = None,
     top_words_for_level: int = 0,
     top_num_words: int = 1,
 ) -> nx.DiGraph:
@@ -259,6 +263,7 @@ def group_membership_digraphs_of(
 
     MEMBERSHIP_IDX: int
     leaf_nodes: list[str]
+    leaf_nodes_to_retain: list[str]
     match kind:
         case GroupMembershipKind.DOCUMENTS:
             MEMBERSHIP_IDX = DOC_MEMBERSHIP_IDX
@@ -281,10 +286,25 @@ def group_membership_digraphs_of(
             raise NotImplementedError(
                 f"{kind} is not valid. Either {', '.join([k.value for k in GroupMembershipKind])}"
             )
+    if categories is not None and len(categories) != len(leaf_nodes):
+        word_or_document: str = (
+            "documents" if MEMBERSHIP_IDX == DOC_MEMBERSHIP_IDX else "words"
+        )
+        raise ValueError(
+            f"Mismatched number of categories ({len(categories)}) with number of {word_or_document} ({len(leaf_nodes)})."
+        )
 
     LEVEL_PREFIX = "Level_{level}_"
     G = nx.DiGraph()
-    G.add_nodes_from(leaf_nodes_to_retain)
+    if categories is not None:
+        G.add_nodes_from(
+            [
+                (leaf, {"category": categories[idx]})
+                for idx, leaf in zip(label_indices, leaf_nodes_to_retain)
+            ]
+        )
+    else:
+        G.add_nodes_from(leaf_nodes_to_retain)
 
     # now, all the edges between the nodes
     for level in range(0, len(model.state.levels)):
@@ -293,12 +313,12 @@ def group_membership_digraphs_of(
             LEVEL_PREFIX.format(level=level) + str(i)
             for i in range(memberships.shape[0])
         ]
-        metadata: dict[str, Any] = {
+        cluster_metadata: dict[str, Any] = {
             "kind": "cluster",
             _LEVEL_META_KEY: level,
             _IS_ROOT_META_KEY: level == (len(model.state.levels) - 1),
         }
-        G.add_nodes_from(cluster_names, **metadata)
+        G.add_nodes_from(cluster_names, **cluster_metadata)
         for cluster_idx in range(memberships.shape[0]):
             for label_idx in label_indices:
                 weight = memberships[cluster_idx, label_idx]

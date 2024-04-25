@@ -58,7 +58,7 @@ function build_radial_cluster(data) {
     // Append nodes.
     svg.append("g")
         .selectAll()
-        .data(root.descendants())
+        .data(root.descendants().filter(d => d.height !== 0))
         .join("circle")
         .attr("transform", d => `rotate(${d.x * 180 / Math.PI - 90}) translate(${d.y},0)`)
         .attr("fill", d => {
@@ -74,6 +74,53 @@ function build_radial_cluster(data) {
             }
         })
         .attr("r", 1.0);
+
+
+    var shapes = [
+        d3.symbolCircle,
+        d3.symbolCross,
+        d3.symbolDiamond,
+        // d3.symbolDiamond2,
+        d3.symbolPlus,
+        d3.symbolSquare,
+        // d3.symbolSquare2,
+        d3.symbolStar,
+        d3.symbolTriangle,
+        // d3.symbolTriangle2,
+        d3.symbolWye,
+        d3.symbolTimes,
+    ]
+    var shapeIdx = 0;
+
+    var categoryToShape = {};
+
+    svg.append("g")
+        .selectAll()
+        .data(root.descendants().filter(d => d.height === 0))
+        .join((enter) => {
+            const e = enter.append('g');
+            e.each(function (d) {
+                const group = d3.select(this);
+                const category = d.data.category;
+                console.log(`GOT CATEGORY: ${category} for ${d.data.id}`)
+                if (category !== null && category !== undefined) {
+                    if (!categoryToShape.hasOwnProperty(category)) {
+                        categoryToShape[category] = shapes[shapeIdx % shapes.length];
+                        shapeIdx++;
+                    }
+                    group.append('path')
+                        .attr('d', d3.symbol().type(categoryToShape[category]).size(8))
+                        .attr('fill', colorScale(d.parent.data.id));
+                } else {
+                    group.append('circle')
+                        .attr('fill', colorScale(d.parent.data.id))
+                        .attr('r', 1.0);
+                }
+            })
+            return e;
+        })
+        .attr("transform", d => `rotate(${d.x * 180 / Math.PI - 90}) translate(${d.y},0)`);
+
 
     // Append labels.
     svg.append("g")
