@@ -127,7 +127,11 @@ class Viz(object):
         self.digraph = digraph
 
         global _IS_ROOT_META_KEY
-        roots = [node for node in digraph if digraph.nodes[node].get(_IS_ROOT_META_KEY, False)]
+        roots = [
+            node
+            for node in digraph
+            if digraph.nodes[node].get(_IS_ROOT_META_KEY, False)
+        ]
         assert len(roots) == 1, "Expecting only 1 root"
         root = roots[0]
 
@@ -262,6 +266,10 @@ def group_membership_digraphs_of(
             leaf_nodes_to_retain = leaf_nodes
             label_indices = list(range(len(leaf_nodes)))
         case GroupMembershipKind.WORDS:
+            if top_words_for_level > (len(model.state.levels) - 1):
+                raise ValueError(f"Maximum level is {len(model.state.levels) - 1}")
+            if top_words_for_level < 0:
+                raise ValueError("Minimum level is 0.")
             MEMBERSHIP_IDX = WORD_MEMBERSHIP_IDX
             leaf_nodes = model.words
             top_word_indices: list[int] = top_word_indices_for_level(
