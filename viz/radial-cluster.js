@@ -31,12 +31,13 @@ function build_radial_cluster(data) {
         .attr("viewBox", [-cx, -cy, width, height])
         .attr("style", "width: 100%; height: auto; font: 10px sans-serif;");
 
+    const container = svg.append("g");
 
     const secondOuterMostNodes = root.descendants().filter(d => d.height === 1);
     const colorScale = d3.scaleOrdinal(secondOuterMostNodes.map(d => d.data.id), d3.schemeCategory10);  // cycle the 10 colours
 
     // Append links.
-    const linkSelection = svg.append("g")
+    const linkSelection = container.append("g")
         .attr("fill", "none")
         .attr("stroke", "#555")
         .attr("stroke-opacity", 0.4)
@@ -56,7 +57,7 @@ function build_radial_cluster(data) {
         });
 
     // Append nodes.
-    svg.append("g")
+    container.append("g")
         .selectAll()
         .data(root.descendants().filter(d => d.height !== 0))
         .join("circle")
@@ -95,7 +96,7 @@ function build_radial_cluster(data) {
 
     var categoryToShape = {};
 
-    const outerMostNodesSelection = svg.append("g")
+    const outerMostNodesSelection = container.append("g")
         .selectAll()
         .data(outerMostNodes)
         .join("g");
@@ -103,7 +104,6 @@ function build_radial_cluster(data) {
     outerMostNodesSelection.each(function (d) {
         const group = d3.select(this);
         const category = d.data.category;
-        console.log(`GOT CATEGORY: ${category} for ${d.data.id}`)
         if (category !== null && category !== undefined) {
             if (!categoryToShape.hasOwnProperty(category)) {
                 categoryToShape[category] = shapes[shapeIdx % shapes.length];
@@ -122,15 +122,48 @@ function build_radial_cluster(data) {
     outerMostNodesSelection
         .attr("transform", d => `rotate(${d.x * 180 / Math.PI - 90}) translate(${d.y},0)`);
 
+    // i.e. there are categories
+    if (Object.keys(categoryToShape).length > 0) {
+        console.log("categoryToShape.length is > 0")
+        const legendData = Object.entries(categoryToShape).map(([label, shape]) => ({
+            label: label, shape: shape
+        }))
+        const legend = svg.append('g')
+            .attr('class', 'legend')
+            .attr('transform', 'translate(-250, -250)');  // Adjust position according to your needs
+
+        legend.selectAll('g')
+            .data(legendData)
+            .enter()
+            .append('g')
+            .attr('transform', (d, i) => `translate(0, ${i * 8})`)  // Vertical layout, 8 is margin.
+            .each(function (d) {
+                const entry = d3.select(this);
+
+                // Add the shape
+                entry.append('path')
+                    .attr('d', d3.symbol().type(d.shape).size(12))  // Size of the symbol
+                    .attr('transform', 'translate(10, 0)')  // Center the shape in the legend entry
+                    .attr('fill', 'grey');  // Optional: set a fill color
+
+                // Add the text label
+                entry.append('text')
+                    .attr('x', 25)  // Position the text right of the shape
+                    .attr('y', 2)  // Align text vertically
+                    .text(d.label)
+                    .attr("font-size", "5.5px");
+            });
+    }
+
     // only works if there are categories.
     // nodes not in the same category, reduce opacity to 0.2 on mouseover temporarily.
 
     // Append labels.
-    const labelSelection = svg.append("g")
+    const labelSelection = container.append("g")
         .attr("stroke-linejoin", "round")
         .attr("stroke-width", 3)
         .selectAll()
-        .data(outerMostNodes)
+        .data(root.descendants().filter(d => d.height === 0 || d.height > 1))
         .join("text")
         .attr("transform", d => `rotate(${d.x * 180 / Math.PI - 90}) translate(${d.y},0) rotate(${d.x >= Math.PI ? 180 : 0})`)
         .attr("dy", "0.31em")
@@ -143,6 +176,7 @@ function build_radial_cluster(data) {
         })
         .text(d => d.data.id)
         .attr("font-size", "4.5px")
+
 
     outerMostNodesSelection
         .on("mouseover", (event, d) => {
@@ -167,6 +201,21 @@ function build_radial_cluster(data) {
             labelSelection.style("opacity", 1);
         });
 
+    // todo: rotation - not getting the pivot point correctly.
+    // let currentRotation = 0;
+    //
+    // // Allow spinner drag behaviour
+    // const drag = d3.drag()
+    //     .on("drag", (event) => {
+    //         currentRotation += event.dx;
+    //         console.log(`currentRotation: ${currentRotation}`);
+    //         container
+    //             .attr(
+    //                 'transform',
+    //                 `rotate(${currentRotation},${cx},${cy})`
+    //             )
+    //     });
+    // container.call(drag);
     return svg;
 }
 
