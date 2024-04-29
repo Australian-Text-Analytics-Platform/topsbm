@@ -37,7 +37,7 @@ def embed_js(js_path: str, d3_json: str) -> HTML:
     return HTML(html)
 
 
-def progressive_merge(tree_data: dict, level_key: str) -> dict[int, dict]:
+def merge_leafs_per_depth(tree_data: dict, level_key: str) -> dict[int, dict]:
     """
     Progressively merges the tree data dictionaries for all levels.
 
@@ -47,7 +47,7 @@ def progressive_merge(tree_data: dict, level_key: str) -> dict[int, dict]:
         key=2, then all children of level < 2 are merged into level 2.
         key=0 is the same provided tree_data.
 
-    :arg level_key: the key used to represent the 'level metadata during the tree_data construction.
+    :arg level_key: the key used to represent the level metadata during the tree_data construction.
     """
     all_merged_tree_data: dict[int, dict] = dict()
 

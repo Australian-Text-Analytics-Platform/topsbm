@@ -26,10 +26,10 @@ from atap_corpus.parts.dtm import DTM
 from atap_corpus.utils import download
 from topsbm.sbmtm import sbmtm
 
-from utils import embed_js, progressive_merge, top_word_indices_for_level
+from utils import embed_js, merge_leafs_per_depth, top_word_indices_for_level
 import srsly
 
-__all__ = ["wrap"]
+__all__ = ["add_results"]
 
 
 class ATAPWrapper(object):
@@ -67,13 +67,17 @@ class ATAPWrapper(object):
         return download(self.corpus)
 
 
-def wrap(model: sbmtm, corpus: Corpus, used_dtm: str) -> ATAPWrapper:
+def add_results(model: sbmtm, corpus: Corpus) -> ATAPWrapper:
     if not isinstance(model, sbmtm):
         raise ValueError(f"Expecting sbmtm for model but got {model}.")
     if not isinstance(corpus, Corpus):
         raise ValueError(f"Expecting Corpus for corpus but got {corpus}.")
     if model.g is None:
         raise ValueError("Your model hasn't been fitted yet. Call .fit() on the model.")
+
+    # todo: each document belongs to a cluster at each level.
+    #   So we get LEVEL number of columns and CLUSTER number of categories per level.
+    #   in group_memberships()[0], for each doc, get the cluster that is = 1. Name of col=topsbm_lvl_0
 
     # note: let's just only do this for level 0 for now.
     level = 0
@@ -167,7 +171,7 @@ class Viz(object):
 
         if depth not in self.htmls.keys():
             global _LEVEL_META_KEY
-            merged_tree_data: dict = progressive_merge(
+            merged_tree_data: dict = merge_leafs_per_depth(
                 self.tree_data, level_key=_LEVEL_META_KEY
             )
             for merge_level, tree_data in merged_tree_data.items():
