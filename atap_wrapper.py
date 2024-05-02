@@ -68,6 +68,7 @@ def add_results(model: sbmtm, corpus: Corpus):
             file=sys.stderr,
         )
     corpus.attribute("topsbm", attribs)
+    return attribs['metas']
 
 
 # -- Visualisers --
@@ -372,5 +373,8 @@ def topic_dist_of(model: sbmtm, level: int) -> dict[int, np.ndarray[float]]:
     return topic_dists
 
 
-def to_list_of_terms(corpus: Corpus, tokeniser_fn: Callable) -> list[str]:
-    return corpus.docs().apply(tokeniser_fn).tolist()
+def to_list_of_terms(corpus: Corpus, tokeniser_fn: Callable, *matchers) -> list[str]:
+    docs = corpus.docs()
+    for matcher in matchers:
+        docs = corpus.docs().apply(lambda doc: [doc[start:end] for match_id, start, end in matcher(doc)])
+    return docs.apply(tokeniser_fn).tolist()
