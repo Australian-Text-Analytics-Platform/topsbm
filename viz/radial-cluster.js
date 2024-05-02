@@ -201,6 +201,19 @@ function build_radial_cluster(data) {
             labelSelection.style("opacity", 1);
         });
 
+    if (outerMostNodes.length > 0 && outerMostNodes[0].data?.category !== undefined) {
+        svg.append("text")
+            .attr("x", width / 2 - 20)  // Position from the right edge of the SVG
+            .attr("y", -(height / 2))          // Position from the top of the SVG
+            .attr("text-anchor", "end")  // Align text to the right
+            .attr("fill", "#999")  // Text color
+            .attr("font-family", "'Helvetica Neue', Arial, sans-serif")  // Font family
+            .attr("font-size", "6px")  // Font size
+            .style("pointer-events", "none")  // Make the text non-interactive
+            .text("💡 Highlight same category nodes by hovering over");  // Instruction text
+    }
+
+
     // todo: rotation - not getting the pivot point correctly.
     // let currentRotation = 0;
     //
