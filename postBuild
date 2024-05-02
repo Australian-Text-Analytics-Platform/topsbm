@@ -1,5 +1,5 @@
 SITE_PACKAGES_DIR=$(python -c "import site; print(site.getsitepackages()[0])")
 TOPSBM_DIR="${SITE_PACKAGES_DIR}/topsbm"
-git clone https://github.com/martingerlach/hSBM_Topicmodel.git $TOPSBM_DIR
+git clone --quiet https://github.com/edugalt/hSBM_Topicmodel.git $TOPSBM_DIR
 cd $TOPSBM_DIR
-git checkout 2e0d61cd1b0bfc3419188dd9c2ff7d0d0ab2b213
+git checkout c1262e171adb7f4fee200cc54e6ffceb1d4caa1f
