@@ -22,6 +22,7 @@ class WikiPath(Enum):
     meta_edges: str = DATA_DIR.joinpath(
         "wikipedia-metadataEdgelist.txt"
     )  # this will be unused for workshop 08.May.24
+    categories: str = DATA_DIR.joinpath("wikipedia-categories.txt")
 
 
 class ArxivPath(Enum):
@@ -77,18 +78,19 @@ def parse_wiki(out: str) -> str:
         index_col=False,
     )
     df["title"] = pd.read_table(WikiPath.title.value, header=None)
-    df = pd.merge(df, pd.read_csv(WikiPath.meta_nodes.value, sep="\t"), on="title")
-    assert (
-        "category" in df.columns
-    ), f"Missing 'category' column from {WikiPath.meta_nodes.value}."
-    assert (
-        "subcategory" in df.columns
-    ), f"Missing 'subcategory' column from {WikiPath.meta_nodes.value}."
-
-    df["category"] = df["category"].apply(lambda c: c.replace("Category:", "").strip())
-    df["subcategory"] = df["subcategory"].apply(
-        lambda c: c.replace("Category:", "").strip()
-    )
+    df['category'] = pd.read_table(WikiPath.categories.value, header=None)
+    # df = pd.merge(df, pd.read_csv(WikiPath.meta_nodes.value, sep="\t"), on="title")
+    # assert (
+    #     "category" in df.columns
+    # ), f"Missing 'category' column from {WikiPath.meta_nodes.value}."
+    # assert (
+    #     "subcategory" in df.columns
+    # ), f"Missing 'subcategory' column from {WikiPath.meta_nodes.value}."
+    #
+    # df["category"] = df["category"].apply(lambda c: c.replace("Category:", "").strip())
+    # df["subcategory"] = df["subcategory"].apply(
+    #     lambda c: c.replace("Category:", "").strip()
+    # )
     df.to_csv(out, index=False)
     return out
 
@@ -101,9 +103,12 @@ def parse_arxiv(out: str) -> str:
         names=["document"],
         index_col=False,
     )
-    df["title"] = pd.read_table(ArxivPath.title.value, header=None)
+    df["title"] = pd.read_table(ArxivPath.title.value, header=None).loc[:, 0].apply(
+        lambda t: t.lstrip("'").rstrip("'").strip()
+    )
     df["category"] = pd.read_table(ArxivPath.meta_nodes.value, header=None).loc[:, 1]
     df["category"] = df["category"].apply(lambda c: c.replace("'", "").strip())
+    df = df.drop_duplicates(subset='title', keep='first').reset_index(drop=True)
     df.to_csv(out, index=False)
     return out
 
