@@ -27,3 +27,10 @@ Demo notebook:
 
 + TopSBM website: https://topsbm.github.io/
 + TopSBM repository: https://github.com/martingerlach/hSBM_Topicmodel
+
+## Local
+If you are running this repository locally, you'll first need to:
+```shell
+# 1. activate your virtual environment
+./scripts/install_topsbm.sh topsbm
+```
