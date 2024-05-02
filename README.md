@@ -21,7 +21,7 @@ a Corpus with TopSBM results. You may then choose to upload this Corpus across t
 [//]: # ([![Binder]&#40;https://binderhub.atap-binder.cloud.edu.au/badge_logo.svg&#41;]&#40;https://binderhub.atap-binder.cloud.edu.au/v2/gh/Australian-Text-Analytics-Platform/topsbm.git/7fe17352f081b84406605632460a75517098805b?labpath=demo.ipynb&#41;)
 
 Demo notebook:
-[![Binder](https://binderhub.atap-binder.cloud.edu.au/badge_logo.svg)](https://binderhub.atap-binder.cloud.edu.au/v2/gh/Australian-Text-Analytics-Platform/topsbm.git/2b46c861e50258cf3c1bd7c403d7fb45dff41d4e?labpath=workshop.ipynb)
+[![Binder](https://binderhub.atap-binder.cloud.edu.au/badge_logo.svg)](https://binderhub.atap-binder.cloud.edu.au/v2/gh/Australian-Text-Analytics-Platform/topsbm.git/8172fc61ce71296c7756f6ba9a85d7bae0f5e0fe?labpath=workshop.ipynb)
 h
 
 # Citations
