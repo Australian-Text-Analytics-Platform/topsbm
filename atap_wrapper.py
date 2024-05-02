@@ -66,7 +66,7 @@ class ATAPWrapper(object):
         return download(self.corpus)
 
 
-def add_results(model: sbmtm, corpus: Corpus) -> ATAPWrapper:
+def add_results(model: sbmtm, corpus: Corpus):
     if not isinstance(model, sbmtm):
         raise ValueError(f"Expecting sbmtm for model but got {model}.")
     if not isinstance(corpus, Corpus):
@@ -74,24 +74,33 @@ def add_results(model: sbmtm, corpus: Corpus) -> ATAPWrapper:
     if model.g is None:
         raise ValueError("Your model hasn't been fitted yet. Call .fit() on the model.")
 
-    # todo: each document belongs to a cluster at each level.
-    #   So we get LEVEL number of columns and CLUSTER number of categories per level.
-    #   in group_memberships()[0], for each doc, get the cluster that is = 1. Name of col=topsbm_lvl_0
+    DOC_MEMBERSHIP_IDX: int = 0
 
-    # note: let's just only do this for level 0 for now.
-    level = 0
-    topic_dtms = topic_dtms_of(model, level, corpus.get_dtm(used_dtm))
-    attributes = dict(word_clusters=dict(dtms=dict()), topic_dists=dict(metas=dict()))
-    for cluster_idx, topic_dtm in topic_dtms.items():
-        name = f"{used_dtm}_topsbm_lv{level}_cluster{cluster_idx}"
-        attributes["word_clusters"]["dtms"][cluster_idx] = name
-        corpus.add_dtm(topic_dtm, name)
-    topic_dists: dict[int, np.ndarray[float]] = topic_dist_of(model, level)
-    for topic_idx, topic_dist in topic_dists.items():
-        name = f"topsbm_lv{level}_topic{topic_idx}"
-        attributes["topic_dists"]["metas"][topic_idx] = name
-        corpus.add_meta(topic_dist, name=name)
-    return ATAPWrapper(model, corpus, attributes)
+    attribs = {"meta": list()}
+    for level in range(0, len(model.state.levels)):
+        doc_memberships = model.group_membership(l=level)[DOC_MEMBERSHIP_IDX]
+        membership_vector = np.argmax(doc_memberships.T, axis=1)
+        name = f"topsbm_lvl_{level}_cluster"
+        corpus.add_meta(membership_vector, name=name)
+        attribs["meta"].append(name)
+
+    try:
+        git_args = {
+            "origin": ["config", "--get", "remote.origin.url"],
+            "commit": ["rev-parse", "HEAD"],
+        }
+        git = dict()
+        for name, args in git_args.items():
+            git[name] = subprocess.check_output(["git"] + args).strip().decode("utf-8")
+
+        git["origin"] = git["origin"].replace("git@github.com:", "https://")
+        attribs["git"] = git
+    except subprocess.CalledProcessError:
+        print(
+            "Failed to retrieve git information to be part of the Corpus attributes. Skipped.",
+            file=sys.stderr,
+        )
+    corpus.attribute("topsbm", attribs)
 
 
 # -- Visualisers --
