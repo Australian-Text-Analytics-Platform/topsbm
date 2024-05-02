@@ -3,24 +3,32 @@ channels:
   - conda-forge
   - defaults
 dependencies:
+  - argon2-cffi=23.1.0=pyhd8ed1ab_0
   - argon2-cffi-bindings=21.2.0=py311h6c40b1e_0
+  - arrow=1.3.0=pyhd8ed1ab_0
   - async-lru=2.0.4=py311hecd8cb5_0
   - atk-1.0=2.38.0=h1d18e73_1
   - attrs=23.1.0=py311hecd8cb5_0
   - beautifulsoup4=4.12.2=py311hecd8cb5_0
+  - bleach=6.1.0=pyhd8ed1ab_0
   - brotli=1.1.0=h0dc2134_1
   - brotli-bin=1.1.0=h0dc2134_1
   - brotli-python=1.0.9=py311hcec6c5f_7
   - bzip2=1.0.8=h1de35cc_0
-  - ca-certificates=2023.12.12=hecd8cb5_0
+  - ca-certificates=2024.3.11=hecd8cb5_0
+  - cached-property=1.5.2=hd8ed1ab_1
+  - cached_property=1.5.2=pyha770c72_1
   - cairo=1.18.0=h99e66fa_0
   - cairomm-1.16=1.16.2=h5b44118_1
   - certifi=2024.2.2=py311hecd8cb5_0
   - cffi=1.16.0=py311hc0b63fd_0
+  - contourpy=1.2.1=py311h1d816ee_0
   - cycler=0.12.1=pyhd8ed1ab_0
   - decorator=5.1.1=pyhd3eb1b0_0
   - defusedxml=0.7.1=pyhd3eb1b0_0
+  - entrypoints=0.4=pyhd8ed1ab_0
   - epoxy=1.5.10=h5eb16cf_1
+  - exceptiongroup=1.2.0=pyhd8ed1ab_2
   - expat=2.5.0=hf0c8a7f_1
   - font-ttf-dejavu-sans-mono=2.37=hab24e00_0
   - font-ttf-inconsolata=3.000=h77eed37_0
@@ -30,6 +38,7 @@ dependencies:
   - fonts-conda-ecosystem=1=0
   - fonts-conda-forge=1=0
   - fonttools=4.43.1=py311he705e18_0
+  - fqdn=1.5.1=pyhd8ed1ab_0
   - freetype=2.12.1=h60636b9_2
   - fribidi=1.0.10=hbcb3906_0
   - gdk-pixbuf=2.42.10=h5968b1e_3
@@ -48,7 +57,13 @@ dependencies:
   - hicolor-icon-theme=0.17=h694c41f_2
   - icu=73.2=hf5e326d_0
   - idna=3.4=py311hecd8cb5_0
+  - importlib-metadata=7.1.0=pyha770c72_0
+  - importlib_metadata=7.1.0=hd8ed1ab_0
+  - importlib_resources=6.4.0=pyhd8ed1ab_0
+  - isoduration=20.11.0=pyhd8ed1ab_0
+  - jsonpointer=2.4=py311h6eed73b_3
   - jsonschema-specifications=2023.7.1=py311hecd8cb5_0
+  - jsonschema-with-format-nongpl=4.21.1=pyhd8ed1ab_0
   - kiwisolver=1.4.5=py311h5fe6e05_1
   - lcms2=2.15=ha53face_2
   - lerc=4.0.0=hb486fe8_0
@@ -86,6 +101,7 @@ dependencies:
   - markupsafe=2.1.3=py311h6c40b1e_0
   - matplotlib-base=3.8.0=py311hd316c10_2
   - matplotlib-inline=0.1.6=py311hecd8cb5_0
+  - mistune=3.0.2=pyhd8ed1ab_0
   - munkres=1.1.4=pyh9f0ad1d_0
   - nbclient=0.8.0=py311hecd8cb5_0
   - nbformat=5.9.2=py311hecd8cb5_0
@@ -103,7 +119,7 @@ dependencies:
   - pillow=10.0.1=py311hd5308a1_1
   - pip=23.3=py311hecd8cb5_0
   - pixman=0.42.2=he965462_0
-  - prometheus_client=0.14.1=py311hecd8cb5_0
+  - pkgutil-resolve-name=1.3.10=pyhd8ed1ab_1
   - prompt_toolkit=3.0.43=hd3eb1b0_0
   - pthread-stubs=0.4=hc929b4f_1001
   - ptyprocess=0.7.0=pyhd3eb1b0_2
@@ -115,7 +131,6 @@ dependencies:
   - pysocks=1.7.1=py311hecd8cb5_0
   - python=3.11.5=hf27a42d_0
   - python-dateutil=2.8.2=pyhd8ed1ab_0
-  - python-fastjsonschema=2.16.2=py311hecd8cb5_0
   - python-json-logger=2.0.7=py311hecd8cb5_0
   - python_abi=3.11=2_cp311
   - pytz=2023.3.post1=py311hecd8cb5_0
@@ -135,17 +150,20 @@ dependencies:
   - soupsieve=2.5=py311hecd8cb5_0
   - sparsehash=2.0.4=hf0c8a7f_1
   - sqlite=3.41.2=h6c40b1e_0
-  - stack_data=0.2.0=pyhd3eb1b0_0
   - terminado=0.17.1=py311hecd8cb5_0
   - tinycss2=1.2.1=py311hecd8cb5_0
   - tk=8.6.12=h5d9f67b_0
-  - typing_extensions=4.9.0=py311hecd8cb5_1
+  - tornado=6.4=py311he705e18_0
+  - uri-template=1.3.0=pyhd8ed1ab_0
+  - webcolors=1.13=pyhd8ed1ab_0
+  - webencodings=0.5.1=pyhd8ed1ab_2
   - wheel=0.41.2=py311hecd8cb5_0
   - xorg-libxau=1.0.11=h0dc2134_0
   - xorg-libxdmcp=1.1.3=h35c211d_0
   - xz=5.4.2=h6c40b1e_0
   - yaml=0.2.5=haf1e3a3_0
   - zeromq=4.3.5=hcec6c5f_0
+  - zipp=3.17.0=pyhd8ed1ab_0
   - zlib=1.2.13=h8a1eda9_5
   - zstandard=0.21.0=py311h26cfcfc_1
   - zstd=1.5.5=h829000d_0
@@ -155,14 +173,11 @@ dependencies:
       - annotated-types==0.6.0
       - anyio==4.0.0
       - appnope==0.1.3
-      - argon2-cffi==23.1.0
-      - arrow==1.3.0
       - asttokens==2.4.0
       - atap-corpus==0.1.13
       - atap-corpus-loader==1.4.0
       - babel==2.13.1
       - backcall==0.2.0
-      - bleach==6.1.0
       - blis==0.7.11
       - bokeh==3.4.1
       - bottleneck==1.3.7
@@ -174,24 +189,22 @@ dependencies:
       - colorlog==6.7.0
       - comm==0.1.4
       - confection==0.1.3
-      - contourpy==1.2.1
       - coolname==2.2.0
       - cymem==2.0.8
       - debugpy==1.8.0
-      - entrypoints==0.4
       - et-xmlfile==1.1.0
       - executing==2.0.0
       - fastjsonschema==2.18.1
-      - fqdn==1.5.1
+      - h11==0.14.0
+      - httpcore==1.0.5
+      - httpx==0.27.0
       - ipykernel==6.29.3
       - ipython==8.16.1
       - ipython-genutils==0.2.0
-      - isoduration==20.11.0
       - jedi==0.19.1
       - jinja2==3.1.2
       - joblib==1.3.2
       - json5==0.9.14
-      - jsonpointer==2.4
       - jsonschema==4.19.1
       - langcodes==3.3.0
       - linkify-it-py==2.0.2
@@ -201,7 +214,6 @@ dependencies:
       - markdown-it-py==3.0.0
       - mdit-py-plugins==0.4.0
       - mdurl==0.1.2
-      - mistune==3.0.2
       - murmurhash==1.0.10
       - nbclassic==1.0.0
       - nbconvert==7.9.2
@@ -244,7 +256,6 @@ dependencies:
       - tenacity==8.2.3
       - thinc==8.2.1
       - threadpoolctl==3.2.0
-      - tornado==6.4
       - tqdm==4.66.1
       - traitlets==5.12.0
       - typer==0.9.0
@@ -252,13 +263,10 @@ dependencies:
       - typing-extensions==4.8.0
       - tzdata==2023.3
       - uc-micro-py==1.0.2
-      - uri-template==1.3.0
       - urllib3==2.0.7
       - wasabi==1.1.2
       - wcwidth==0.2.8
       - weasel==0.3.3
-      - webcolors==1.13
-      - webencodings==0.5.1
       - websocket-client==1.6.4
       - xlrd==2.0.1
       - xlsxwriter==3.1.9
