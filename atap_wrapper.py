@@ -6,20 +6,18 @@ It provides the following:
     1. Enhanced visualisations.
     2. Integrate results into an ATAP Corpus.
 """
-
+import os
 import sys
 import subprocess
 import tempfile
 from enum import Enum
 from os import PathLike
-from pathlib import Path
 from typing import IO, Callable, Any
 
 from IPython.display import HTML
 
 import networkx as nx
 import numpy as np
-from tqdm.auto import tqdm
 
 from atap_corpus import Corpus
 from atap_corpus.parts.dtm import DTM
@@ -142,8 +140,10 @@ class Viz(object):
         self.tree_data = nx.tree_data(digraph, root=root)
 
         global JUPYTER_ALLOW_HIDDEN
+        if not JUPYTER_ALLOW_HIDDEN:
+            os.makedirs("./tmp", exist_ok=True)
         self.tmpd = tempfile.mkdtemp(
-            dir="./", prefix="." if JUPYTER_ALLOW_HIDDEN else "tmp"
+            dir="./" if JUPYTER_ALLOW_HIDDEN else "./tmp", prefix="." if JUPYTER_ALLOW_HIDDEN else ""
         )
         tmp = tempfile.mktemp(dir=self.tmpd, suffix=".json")
         srsly.write_json(tmp, self.tree_data)
