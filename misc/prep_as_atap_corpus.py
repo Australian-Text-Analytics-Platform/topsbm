@@ -8,7 +8,6 @@ import os
 from enum import Enum
 from pathlib import Path
 from typing import Self, Iterator
-import re
 
 import pandas as pd
 
