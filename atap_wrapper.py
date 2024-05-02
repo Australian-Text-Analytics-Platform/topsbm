@@ -22,48 +22,15 @@ import numpy as np
 
 from atap_corpus import Corpus
 from atap_corpus.parts.dtm import DTM
-from atap_corpus.utils import download
 from topsbm.sbmtm import sbmtm
 
 from utils import embed_js, merge_leafs_per_depth, top_word_indices_for_level
 import srsly
 
-__all__ = ["add_results"]
-
-
-class ATAPWrapper(object):
-    def __init__(self, model: sbmtm, corpus: Corpus, attribs: dict):
-        self.model = model
-        self.corpus = corpus
-        self.attribs = attribs
-
-    def serialise(self, file: PathLike[str] | IO):
-        """Serialise with added topsbm attributes."""
-        attribs = dict()
-        try:
-            git_args = {
-                "origin": ["config", "--get", "remote.origin.url"],
-                "commit": ["rev-parse", "HEAD"],
-            }
-            git = dict()
-            for name, args in git_args.items():
-                git[name] = (
-                    subprocess.check_output(["git"] + args).strip().decode("utf-8")
-                )
-
-            git["origin"] = git["origin"].replace("git@github.com:", "https://")
-            attribs["git"] = git
-        except subprocess.CalledProcessError:
-            print(
-                "Failed to retrieve git information to be part of the Corpus attributes. Skipped.",
-                file=sys.stderr,
-            )
-        attribs["data"] = self.attribs
-        self.corpus.attribute("topsbm", attribs)
-        return self.corpus.serialise(file)
-
-    def download(self):
-        return download(self.corpus)
+__all__ = [
+    "add_results",
+    "visualise",
+]
 
 
 def add_results(model: sbmtm, corpus: Corpus):
