@@ -12,7 +12,7 @@ import re
 
 import pandas as pd
 
-DATA_DIR: Path = Path(f"{os.path.dirname(__file__)}/dataTopSBM")
+DATA_DIR: Path = Path(f"{os.path.dirname(__file__)}/.dataTopSBM")
 assert DATA_DIR.is_dir(), f"{DATA_DIR.absolute()} directory does not exist."
 
 
