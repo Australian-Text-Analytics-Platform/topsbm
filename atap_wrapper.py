@@ -373,7 +373,7 @@ def topic_dist_of(model: sbmtm, level: int) -> dict[int, np.ndarray[float]]:
     return topic_dists
 
 
-def to_list_of_terms(corpus: Corpus, tokeniser_fn: Callable, *matchers) -> list[str]:
+def to_list_of_words(corpus: Corpus, tokeniser_fn: Callable, *matchers) -> list[str]:
     docs = corpus.docs()
     for matcher in matchers:
         docs = corpus.docs().apply(lambda doc: [doc[start:end] for match_id, start, end in matcher(doc)])
