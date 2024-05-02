@@ -194,13 +194,14 @@ dependencies:
       - arrow==1.3.0
       - asttokens==2.4.1
       - async-lru==2.0.4
-      - atap-corpus==0.1.12
+      - atap-corpus==0.1.13
+      - atap-corpus-loader==1.4.0
       - attrs==23.2.0
       - babel==2.14.0
       - beautifulsoup4==4.12.3
       - bleach==6.1.0
       - blis==0.7.11
-      - bokeh==3.3.4
+      - bokeh==3.4.1
       - bottleneck==1.3.8
       - catalogue==2.0.10
       - chardet==5.2.0
@@ -236,6 +237,7 @@ dependencies:
       - langcodes==3.3.0
       - linkify-it-py==2.0.3
       - llvmlite==0.42.0
+      - lxml==5.2.1
       - markdown==3.5.2
       - markdown-it-py==3.0.0
       - markupsafe==2.1.5
@@ -255,9 +257,9 @@ dependencies:
       - odfpy==1.4.1
       - openpyxl==3.1.2
       - overrides==7.7.0
-      - pandas==2.2.1
+      - pandas==2.1.4
       - pandocfilters==1.5.1
-      - panel==1.3.8
+      - panel==1.4.2
       - param==2.0.2
       - parso==0.8.3
       - pexpect==4.9.0
@@ -272,7 +274,9 @@ dependencies:
       - pydantic==2.6.2
       - pydantic-core==2.16.3
       - pygments==2.17.2
+      - pyreadr==0.5.0
       - python-calamine==0.1.7
+      - python-docx==1.1.2
       - python-json-logger==2.0.7
       - pytz==2024.1
       - pyviz-comms==3.0.1
