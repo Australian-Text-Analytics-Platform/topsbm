@@ -6,6 +6,7 @@ It provides the following:
     1. Enhanced visualisations.
     2. Integrate results into an ATAP Corpus.
 """
+
 import os
 import sys
 import subprocess
@@ -143,7 +144,8 @@ class Viz(object):
         if not JUPYTER_ALLOW_HIDDEN:
             os.makedirs("./tmp", exist_ok=True)
         self.tmpd = tempfile.mkdtemp(
-            dir="./" if JUPYTER_ALLOW_HIDDEN else "./tmp", prefix="." if JUPYTER_ALLOW_HIDDEN else ""
+            dir="./" if JUPYTER_ALLOW_HIDDEN else "./tmp",
+            prefix="." if JUPYTER_ALLOW_HIDDEN else "",
         )
         tmp = tempfile.mktemp(dir=self.tmpd, suffix=".json")
         srsly.write_json(tmp, self.tree_data)
@@ -354,6 +356,13 @@ def group_membership_digraphs_of(
                         prior_clusters = [prior for prior, _ in edges]
                         for prior_cluster in prior_clusters:
                             G.add_edge(cluster, prior_cluster, weight=weight)
+
+    # prune nodes with no edges to maintain tree structure
+    nodes_with_edge: set[str] = {tgt for _, tgt in G.edges}
+    all_non_root_nodes: set[str] = set(
+        [n_id for n_id in G.nodes if not G.nodes[n_id].get(_IS_ROOT_META_KEY, False)]
+    )
+    G.remove_nodes_from(list(all_non_root_nodes.difference(nodes_with_edge)))
     return G
 
 
