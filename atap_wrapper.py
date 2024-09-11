@@ -164,6 +164,9 @@ class Viz(object):
         return self.htmls[depth][0]
 
 
+MAX_LEAF_DOCS: int = 30
+
+
 def visualise(
     model: sbmtm,
     corpus: Corpus,
@@ -250,8 +253,21 @@ def group_membership_digraphs_of(
         case GroupMembershipKind.DOCUMENTS:
             MEMBERSHIP_IDX = DOC_MEMBERSHIP_IDX
             leaf_nodes = model.documents
-            leaf_nodes_to_retain = leaf_nodes
-            label_indices = list(range(len(leaf_nodes)))
+            if len(leaf_nodes) > MAX_LEAF_DOCS:
+                leaf_level = 0
+                num_leaf_topics = len(model.topicdist_relative(l=leaf_level))
+                if num_leaf_topics >= MAX_LEAF_DOCS:
+                    top = 1
+                else:
+                    top = int(MAX_LEAF_DOCS / num_leaf_topics)
+
+                top_topic_docs = docs_of_topic(model, l=leaf_level, top=top)
+                top_doc_indices = [vv[-2] for v in top_topic_docs.values() for vv in v]
+                leaf_nodes_to_retain = [model.documents[i] for i in top_doc_indices]
+                label_indices = top_doc_indices
+            else:
+                leaf_nodes_to_retain = leaf_nodes
+                label_indices = list(range(len(leaf_nodes)))
         case GroupMembershipKind.WORDS:
             if top_words_for_level > (len(model.state.levels) - 1):
                 raise ValueError(f"Maximum level is {len(model.state.levels) - 1}")
@@ -370,6 +386,25 @@ def topic_dist_of(model: sbmtm, level: int) -> dict[int, np.ndarray[float]]:
     for topic_idx in range(num_topics):
         topic_dists[topic_idx] = p_tw_d[topic_idx, :]
     return topic_dists
+
+
+def docs_of_topic(
+    model: sbmtm,
+    l: int = 0,
+    top: int = 5,
+) -> dict[int, list[tuple[float, int, str | None]]]:
+    tau_d = model.topicdist_relative(l=l)
+
+    top_topic_docs: dict[int, list[tuple[float, int, str | None]]] = dict()
+    for i in range(len(tau_d[0])):
+        results = []
+        indn = np.argpartition(tau_d[:, i], -top)[-top:]  # indices of top n documents
+        for j in indn:
+            results.append((tau_d[j, i], j, model.documents[j]))
+        results.sort()
+        results.reverse()
+        top_topic_docs[i] = results
+    return top_topic_docs
 
 
 def to_list_of_words(corpus: Corpus, tokeniser_fn: Callable, *matchers) -> list[str]:
