@@ -303,7 +303,7 @@ def group_membership_digraphs_of(
             f"Mismatched number of categories ({len(categories)}) with number of {word_or_document} ({len(leaf_nodes)})."
         )
 
-    LEVEL_PREFIX = "Lvl-{level} "
+    LEVEL_PREFIX = "Lvl-{level} group-"
     G = nx.DiGraph()
     if categories is not None:
         G.add_nodes_from(
@@ -421,7 +421,7 @@ def docs_of_topic(
 def to_list_of_words(corpus: Corpus, tokeniser_fn: Callable, *matchers) -> list[str]:
     docs = corpus.docs()
     for matcher in matchers:
-        docs = corpus.docs().apply(
+        docs = docs.apply(
             lambda doc: [doc[start:end] for match_id, start, end in matcher(doc)]
         )
     return docs.apply(tokeniser_fn).tolist()
