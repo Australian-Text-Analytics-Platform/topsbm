@@ -5,8 +5,8 @@
     <meta charset="UTF-8">
     <title>Viz</title>
 </head>
-<body>
-<div id="container-{uuid}">
+<body style="display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0;">
+<div id="container-{uuid}" style="width: {width}px; height: {height}px; padding: 20px; box-sizing: border-box;">
     <div id="_py_data" d3-json-path={d3_json_path}></div>
 </div>
 <script type="module">

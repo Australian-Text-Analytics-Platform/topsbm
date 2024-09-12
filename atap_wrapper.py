@@ -100,10 +100,13 @@ class Viz(object):
         kind: GroupMembershipKind,
         hierarchy: Hierarchy,
         digraph: nx.DiGraph,
+        width: int,
+        height: int,
     ):
         self.kind = kind
         self.hierarchy = hierarchy
         self.digraph = digraph
+        self.width, self.height = width, height
 
         global _IS_ROOT_META_KEY
         roots = [
@@ -127,7 +130,11 @@ class Viz(object):
         srsly.write_json(tmp, self.tree_data)
 
         self.htmls: dict[int, tuple[HTML, str, dict]] = {
-            0: (embed_js(self.hierarchy.value, tmp), tmp, self.tree_data),
+            0: (
+                embed_js(self.hierarchy.value, tmp, width, height),
+                tmp,
+                self.tree_data,
+            ),
         }
 
     @property
@@ -139,15 +146,15 @@ class Viz(object):
         global _LEVEL_META_KEY
         return self.tree_data[_LEVEL_META_KEY]
 
-    def display(self, depth: int = 0):
-        if depth > self.max_depth:
+    def display(self, max_level: int = 0):
+        if max_level > self.max_depth:
             raise ValueError(
                 f"TopSBM have only inferred a maximum depth of {self.max_depth}."
             )
-        if depth < self.min_depth:
+        if max_level < self.min_depth:
             raise ValueError("TopSBM have a minimum of depth 0.")
 
-        if depth not in self.htmls.keys():
+        if max_level not in self.htmls.keys():
             global _LEVEL_META_KEY
             merged_tree_data: dict = merge_leafs_per_depth(
                 self.tree_data, level_key=_LEVEL_META_KEY
@@ -157,11 +164,11 @@ class Viz(object):
                     tmp = tempfile.mktemp(dir=self.tmpd, suffix=".json")
                     srsly.write_json(tmp, tree_data)
                     self.htmls[merge_level] = (
-                        embed_js(self.hierarchy.value, tmp),
+                        embed_js(self.hierarchy.value, tmp, self.width, self.height),
                         tmp,
                         tree_data,
                     )
-        return self.htmls[depth][0]
+        return self.htmls[max_level][0]
 
 
 MAX_LEAF_DOCS: int = 30
@@ -171,6 +178,8 @@ def visualise(
     model: sbmtm,
     corpus: Corpus,
     kind: str | GroupMembershipKind,
+    width: int,
+    height: int,
     hierarchy: str | Hierarchy,
     categories: list[str] | None = None,
     top_words_for_level: int = 0,
@@ -217,6 +226,8 @@ def visualise(
         kind=kind,
         hierarchy=hierarchy,
         digraph=digraph,
+        width=width,
+        height=height,
     )
 
 
@@ -292,7 +303,7 @@ def group_membership_digraphs_of(
             f"Mismatched number of categories ({len(categories)}) with number of {word_or_document} ({len(leaf_nodes)})."
         )
 
-    LEVEL_PREFIX = "Level_{level}_"
+    LEVEL_PREFIX = "Lvl-{level} "
     G = nx.DiGraph()
     if categories is not None:
         G.add_nodes_from(

@@ -6,10 +6,12 @@ import numpy as np
 from topsbm.sbmtm import sbmtm
 
 
-def embed_js(js_path: str, d3_json: str) -> HTML:
+def embed_js(js_path: str, d3_json: str, width: int, height: int) -> HTML:
     """Embeds JS within HTML for the jupyter notebook.
     :arg js_path - the path to the JS file using D3.
     :arg d3_json - the path to the input d3 data json.
+    :arg width - width in px
+    :arg height - height in px
 
     This loads a HTML template and embed your JS code within it.
     Embedding JS is lightweight and flexible and does not require
@@ -33,7 +35,9 @@ def embed_js(js_path: str, d3_json: str) -> HTML:
         js = h.read()
     id_ = uuid4()
     js = f'const uuid = "{id_}";\n' + js
-    html = template.format(uuid=id_, js=js, d3_json_path=d3_json)
+    html = template.format(
+        uuid=id_, js=js, d3_json_path=d3_json, width=str(width), height=str(height)
+    )
     return HTML(html)
 
 
