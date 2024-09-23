@@ -32,6 +32,8 @@ __all__ = [
     "visualise",
 ]
 
+_SEED: int | None = None
+
 
 def add_results(model: sbmtm, corpus: Corpus):
     if not isinstance(model, sbmtm):
@@ -67,6 +69,8 @@ def add_results(model: sbmtm, corpus: Corpus):
             "Failed to retrieve git information to be part of the Corpus attributes. Skipped.",
             file=sys.stderr,
         )
+    if _SEED is not None:
+        attribs["seed"] = _SEED
     corpus.attribute("topsbm", attribs)
 
 
@@ -425,3 +429,11 @@ def to_list_of_words(corpus: Corpus, tokeniser_fn: Callable, *matchers) -> list[
             lambda doc: [doc[start:end] for match_id, start, end in matcher(doc)]
         )
     return docs.apply(tokeniser_fn).tolist()
+
+
+def set_seed(seed: int = 42):
+    import graph_tool.all as gt
+
+    global _SEED
+    gt.seed_rng(seed)
+    _SEED = seed
