@@ -3,11 +3,11 @@
 # ATAP: TopSBM
 
 TopSBM is a topic modelling approach that infers a hierarchy of topic clusters and word clusters in your Corpus
-in a non-parametric manner by leveraging stochastic block models.
+in a non-parametric manner by leveraging stochastic block models. Top (Topic), SBM (Stochastic Block Models). 
 
-The approach is developed by E.G. Altman et al.
+This approach was developed in
 
-Top (Topic), SBM (Stochastic Block Models).
+M. Gerlach, T. P. Peixoto, and E. G. Altmann, "A network approach to topic models", [Sci. Adv. 4, eaaq1360 (2018)](http://doi.org/10.1126/sciadv.aaq1360)
 
 This repository is an integration effort of TopSBM to the ATAP platform.
 
