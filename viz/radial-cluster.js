@@ -77,7 +77,6 @@ function build_radial_cluster(data, width, height) {
         })
         .attr("r", 1.0);
 
-    const outerMostNodes = root.descendants().filter(d => d.height === 0);
 
     var shapes = [
         d3.symbolCircle,
@@ -96,6 +95,8 @@ function build_radial_cluster(data, width, height) {
     var shapeIdx = 0;
 
     var categoryToShape = {};
+
+    const outerMostNodes = root.descendants().filter(d => d.height === 0);
 
     const outerMostNodesSelection = container.append("g")
         .selectAll()
@@ -125,7 +126,6 @@ function build_radial_cluster(data, width, height) {
 
     // i.e. there are categories
     if (Object.keys(categoryToShape).length > 0) {
-        console.log("categoryToShape.length is > 0")
         const legendData = Object.entries(categoryToShape).map(([label, shape]) => ({
             label: label, shape: shape
         }))
@@ -159,10 +159,12 @@ function build_radial_cluster(data, width, height) {
             });
     }
 
-    // only works if there are categories.
-    // nodes not in the same category, reduce opacity to 0.2 on mouseover temporarily.
 
-    // Append labels.
+    /*
+    ++ TEXT Labels ++
+
+    Below configures the text labels for each node.
+     */
     const labelSelection = container.append("g")
         .attr("stroke-linejoin", "round")
         .attr("stroke-width", 3)
@@ -175,14 +177,26 @@ function build_radial_cluster(data, width, height) {
         .attr("x", d => d.x < Math.PI === !d.children ? 6 : -6)
         .attr("text-anchor", d => d.x < Math.PI === !d.children ? "start" : "end")
         .attr("paint-order", "stroke")
-        .attr("stroke", "white")
+        // .attr("stroke", "white")
         .attr("fill", d => {
             return "currentColor"
         })
         .text(d => d.data.id)
-        .attr("font-size", "4.5px")
+        .attr("font-size", d => {
+            if (d.height === 0) {
+                return "3px"
+            } else {
+                return "6px"
+            }
+        })
 
 
+    /*
+    ++ USER EVENT: Mouse Hover or Mouse Over. ++
+
+    only works if there are categories.
+    nodes not in the same category, reduce opacity to 0.2 on mouseover temporarily.
+     */
     outerMostNodesSelection
         .on("mouseover", (event, d) => {
             const activeCategory = d.data.category;
@@ -206,6 +220,12 @@ function build_radial_cluster(data, width, height) {
             labelSelection.style("opacity", 1);
         });
 
+
+    /*
+    ++ LEGEND (Instructions) ++
+
+    Below show the legends on the visualisation.
+     */
 
     if (outerMostNodes.length > 0 && outerMostNodes[0].data?.category !== undefined) {
         svg.append("text")
@@ -247,7 +267,6 @@ function build_radial_cluster(data, width, height) {
     // container.call(drag);
 
     function handleZoom(e) {
-        console.log("zoom", e.transform, e);
         container.attr("transform", e.transform)
     }
 
@@ -258,6 +277,15 @@ function build_radial_cluster(data, width, height) {
     return svg;
 }
 
+function toggleCollapse(node) {
+    if (node.children) {
+        node._children = node.children; // Store children in a temporary variable to "collapse" them
+        node.children = null;
+    } else {
+        node.children = node._children; // Restore children if already collapsed
+        node._children = null;
+    }
+}
 
 // -- python output data pass in --
 try {
