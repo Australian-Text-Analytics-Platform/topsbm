@@ -167,11 +167,17 @@ function build_radial_cluster(data, width, height) {
      */
     const labelSelection = container.append("g")
         .attr("stroke-linejoin", "round")
-        .attr("stroke-width", 3)
+        .attr("stroke-width", 1.5)
         .selectAll()
         // .data(root.descendants().filter(d => d.height === 0 || d.height > 1))
         .data(root.descendants())
         .join("text")
+        .attr("data-event-ref", d => {
+                if (d.height === 0 && d.parent !== undefined) {
+                    return `label-${d.parent.data.id}-${d.data.id}`
+                }
+            }
+        )
         .attr("transform", d => `rotate(${d.x * 180 / Math.PI - 90}) translate(${d.y},0) rotate(${d.x >= Math.PI ? 180 : 0})`)
         .attr("dy", "0.31em")
         .attr("x", d => d.x < Math.PI === !d.children ? 6 : -6)
@@ -189,6 +195,31 @@ function build_radial_cluster(data, width, height) {
                 return "6px"
             }
         })
+        .on("mouseover", (event, d) => {
+            if (d.height === 0) {
+                d3.select(event.currentTarget)
+                    .interrupt()
+                    .transition()
+                    .duration(150)
+                    .attr("font-size", "6px")
+                // .attr("stroke", "white")
+                // .attr("stroke-width", "6px")
+                // .attr("transform", d => `rotate(${d.x * 180 / Math.PI - 90}) translate(${d.y + 8},0) rotate(${d.x >= Math.PI ? 180 : 0})`)
+            }
+
+        })
+        .on("mouseout", (event, d) => {
+            if (d.height === 0) {
+                d3.select(event.currentTarget)
+                    .interrupt()
+                    .transition()
+                    .duration(150)
+                    .attr("font-size", d.height === 0 ? "3px" : "6px") // Revert to original font size based on height
+                // .attr("stroke", "")
+                // .attr("stroke-width", 1.5)
+                // .attr("transform", d => `rotate(${d.x * 180 / Math.PI - 90}) translate(${d.y},0) rotate(${d.x >= Math.PI ? 180 : 0})`)
+            }
+        });
 
 
     /*
@@ -213,12 +244,50 @@ function build_radial_cluster(data, width, height) {
                     (label) => label.data.category === activeCategory ? 1 : 0.2
                 )
             }
+            d3.select(`[data-event-ref="label-${d.parent.data.id}-${d.data.id}"]`)
+                .interrupt()
+                .transition()
+                .duration(150)
+                .attr("font-size", "4px")
+                .attr("transform", d => `rotate(${d.x * 180 / Math.PI - 90}) translate(${d.y + 15},0) rotate(${d.x >= Math.PI ? 180 : 0})`)
         })
-        .on("mouseout", () => {
+        .on("mouseout", (event, d) => {
             outerMostNodesSelection.style("opacity", 1);
             linkSelection.style("opacity", 1);
             labelSelection.style("opacity", 1);
-        });
+            d3.select(`[data-event-ref="label-${d.parent.data.id}-${d.data.id}"]`)
+                .interrupt()
+                .transition()
+                .duration(150)
+                .attr("font-size", d.height === 0 ? "3px" : "6px") // Revert to original font size based on height
+                .attr("transform", d => {
+                    if (d.lockLabelTranslate === undefined || !d.lockLabelTranslate) {
+                        return `rotate(${d.x * 180 / Math.PI - 90}) translate(${d.y},0) rotate(${d.x >= Math.PI ? 180 : 0})`
+                    } else {
+                        return `rotate(${d.x * 180 / Math.PI - 90}) translate(${d.y + 15},0) rotate(${d.x >= Math.PI ? 180 : 0})`
+                    }
+                })
+        })
+        .on("click", (event, d) => {
+            if (d.lockLabelTranslate === undefined || !d.lockLabelTranslate) {
+                d3.select(`[data-event-ref="label-${d.parent.data.id}-${d.data.id}"]`)
+                    .interrupt()
+                    .transition()
+                    .duration(150)
+                    .attr("font-size", "4px")
+                    .attr("transform", d => `rotate(${d.x * 180 / Math.PI - 90}) translate(${d.y + 15},0) rotate(${d.x >= Math.PI ? 180 : 0})`)
+                d.lockLabelTranslate = true
+            } else {
+                d3.select(`[data-event-ref="label-${d.parent.data.id}-${d.data.id}"]`)
+                    .interrupt()
+                    .transition()
+                    .duration(150)
+                    .attr("font-size", d.height === 0 ? "3px" : "6px") // Revert to original font size based on height
+                    .attr("transform", d => `rotate(${d.x * 180 / Math.PI - 90}) translate(${d.y},0) rotate(${d.x >= Math.PI ? 180 : 0})`)
+                d.lockLabelTranslate = false
+            }
+        })
+    ;
 
 
     /*
@@ -277,15 +346,21 @@ function build_radial_cluster(data, width, height) {
     return svg;
 }
 
-function toggleCollapse(node) {
-    if (node.children) {
-        node._children = node.children; // Store children in a temporary variable to "collapse" them
-        node.children = null;
-    } else {
-        node.children = node._children; // Restore children if already collapsed
-        node._children = null;
-    }
-}
+// function magnify(dataEventRef) {
+//     d3.select(`[data-event-ref="${dataEventRef}"]`)
+//         .transition()
+//         .duration(150)
+//         .attr("font-size", "10px")
+//         .attr("transform", d => `rotate(${d.x * 180 / Math.PI - 90}) translate(${d.y + 10},0) rotate(${d.x >= Math.PI ? 180 : 0})`)
+// }
+//
+// function deMagnify(dataEventRef) {
+//     d3.select(`[data-event-ref="${dataEventRef}"]`)
+//         .transition()
+//         .duration(150)
+//         .attr("font-size", d.height === 0 ? "3px" : "6px") // Revert to original font size based on height
+//         .attr("transform", d => `rotate(${d.x * 180 / Math.PI - 90}) translate(${d.y},0) rotate(${d.x >= Math.PI ? 180 : 0})`)
+// }
 
 // -- python output data pass in --
 try {
