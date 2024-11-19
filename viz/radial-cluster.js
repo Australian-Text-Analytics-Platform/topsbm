@@ -361,6 +361,79 @@ function build_radial_cluster(data, width, height) {
 //         .attr("font-size", d.height === 0 ? "3px" : "6px") // Revert to original font size based on height
 //         .attr("transform", d => `rotate(${d.x * 180 / Math.PI - 90}) translate(${d.y},0) rotate(${d.x >= Math.PI ? 180 : 0})`)
 // }
+function enableCenterView(button, svg) {
+    button.addEventListener("click", () => {
+        const container = svg.select("g");
+
+        // Calculate the bounding box of the container
+        const bbox = container.node().getBBox();
+
+        // Center the content by calculating translation offsets
+        const offsetX = -bbox.x - bbox.width / 2;
+        const offsetY = -bbox.y - bbox.height / 2;
+
+        // Apply a transform to center the content in the SVG viewport
+        container.attr("transform", `translate(${offsetX}, ${offsetY})`);
+    })
+}
+
+// function enableExportAsSVGButton(button, svg) {
+//     button.addEventListener("click", () => {
+//         // console.log("Clicked");
+//         // console.log(svg);
+//         // console.log(svg.select("g"));
+//         // todo: retrieve the HTML SVG element for the d3 graph
+//         //  remove the text elements e.g. "Zoom and Pan",
+//         //  modify the svg to add xmlns="http://www.w3.org/2000/svg" in the svg's attribute.
+//         //  download the svg as a file.
+//     })
+// }
+function enableExportAsSVGButton(button, svg) {
+    button.addEventListener("click", () => {
+        // Retrieve the HTML SVG element for the D3 graph
+        const svgNode = svg.node();
+
+        // Clone the SVG node to avoid modifying the original
+        const clone = svgNode.cloneNode(true);
+
+        // Remove the instruction text elements from the clone
+        clone.querySelectorAll("text").forEach(textElem => {
+            if (textElem.textContent.includes("💡") ||
+                textElem.textContent.includes("Zoom and Pan")) {
+                textElem.remove();
+            }
+        });
+
+        // Ensure the clone has the xmlns attribute
+        if (!clone.hasAttribute("xmlns")) {
+            clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+        }
+
+        // Serialize the cloned SVG to a string
+        const serializer = new XMLSerializer();
+        let svgString = serializer.serializeToString(clone);
+
+        // Add XML declaration
+        svgString = '<?xml version="1.0" standalone="no"?>\r\n' + svgString;
+
+        // Create a Blob from the SVG string
+        const blob = new Blob([svgString], {type: "image/svg+xml;charset=utf-8"});
+
+        // Create a link to download the Blob as a file
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "topsbm_topics.svg";
+
+        // Simulate a click on the link to trigger the download
+        document.body.appendChild(link);
+        link.click();
+
+        // Clean up
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    });
+}
 
 // -- python output data pass in --
 try {
@@ -402,6 +475,9 @@ try {
         .then((j) => build_radial_cluster(j, width, height))
 
     container.append(svg.node())
+
+    enableCenterView(document.getElementById("center-view-btn"), svg)
+    enableExportAsSVGButton(document.getElementById("export-svg-btn"), svg)
 } catch (err) {
     console.error(err)
 }
