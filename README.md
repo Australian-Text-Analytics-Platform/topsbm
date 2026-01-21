@@ -18,10 +18,10 @@ download
 a Corpus with TopSBM results. You may then choose to upload this Corpus across to other ATAP tools for further analysis.
 
 [//]: # (Demo notebook &#40;minimal&#41;:)
-[//]: # ([![Binder]&#40;https://binderhub.atap-binder.cloud.edu.au/badge_logo.svg&#41;]&#40;https://binderhub.atap-binder.cloud.edu.au/v2/gh/Australian-Text-Analytics-Platform/topsbm.git/main?labpath=workshop.ipynb&#41;)
+[//]: # ([![Binder]&#40;https://binderhub.rc.nectar.org.au/badge_logo.svg&#41;]&#40;https://binderhub.rc.nectar.org.au/v2/gh/Australian-Text-Analytics-Platform/topsbm.git/main?labpath=workshop.ipynb&#41;)
 
 Demo notebook:
-[![Binder](https://binderhub.atap-binder.cloud.edu.au/badge_logo.svg)](https://binderhub.atap-binder.cloud.edu.au/v2/gh/Australian-Text-Analytics-Platform/topsbm/main?labpath=workshop.ipynb)
+[![Binder](https://binderhub.rc.nectar.org.au/badge_logo.svg)](https://binderhub.rc.nectar.org.au/v2/gh/Australian-Text-Analytics-Platform/topsbm/main?labpath=workshop.ipynb)
 
 # Citations
 
