@@ -23,7 +23,7 @@ a Corpus with TopSBM results. You may then choose to upload this Corpus across t
 If you do not have access to AAF or NZ, you can use the below link to access the tool (this is a free Binder version, limited to 2GB memory only).
 
 Demo notebook:
-[![Binder](https://binderhub.rc.nectar.org.au/badge_logo.svg)](https://binderhub.rc.nectar.org.au/v2/gh/Australian-Text-Analytics-Platform/topsbm/main?labpath=workshop.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/Australian-Text-Analytics-Platform/topsbm/main?labpath=workshop.ipynb)
 
 # Citations
 
