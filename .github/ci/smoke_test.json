@@ -1,0 +1,6 @@
+{
+  "imports": ["graph_tool.all", "topsbm.sbmtm", "atap_wrapper", "atap_corpus_loader", "spacy"],
+  "notebooks": [
+    {"path": "workshop.ipynb", "must_pass_cells": 1, "timeout": 1800}
+  ]
+}
