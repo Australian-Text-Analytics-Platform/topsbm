@@ -180,7 +180,10 @@ try {
     //  for local, start replacing as /files right after the origin. (i.e. replace the entire url path)
     let lastIdx = Math.max(window.location.pathname.indexOf("/doc"), 0)
     let prefix = window.location.pathname.slice(0, lastIdx)
-    let svg = await fetch(`${prefix}/files/${fname}`)
+    // JupyterHub >= 4.1 rejects cookie-authenticated fetch() requests to the
+    // single-user server unless they carry the XSRF token, so send it when present.
+    const xsrf = document.cookie.match(/(?:^|;\s*)_xsrf=([^;]+)/)?.[1]
+    let svg = await fetch(`${prefix}/files/${fname}`, xsrf ? {headers: {"X-XSRFToken": xsrf}} : {})
         .then((res) => {
             if (res.status === 200) {
                 return res.json()
